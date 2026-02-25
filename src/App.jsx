@@ -39,24 +39,38 @@ function App() {
 
   useEffect(() => { if (session) buscarTransacoes() }, [session])
 
+  // ==========================================
+  // 1. CÁLCULOS GLOBAIS (Fixos / Acumulados)
+  // ==========================================
+  // Olha para TODAS as transações, ignorando o mês selecionado
+  const poupadoGlobal = transacoes.filter(t => t.tipo === 'poupanca').reduce((acc, t) => acc + t.valor, 0)
+  const resgatadoGlobal = transacoes.filter(t => t.tipo === 'resgate').reduce((acc, t) => acc + t.valor, 0)
+  const totalPoupancaGlobal = poupadoGlobal - resgatadoGlobal
+
+  // ==========================================
+  // 2. CÁLCULOS MENSAIS (Respeitam o Filtro)
+  // ==========================================
   const transacoesDoMes = transacoes.filter(t => {
     const mesTransacao = t.data_transacao.substring(0, 7);
     return mesTransacao === mesFiltro;
   });
 
-  const entradas = transacoesDoMes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0)
-  const despesas = transacoesDoMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0)
-  const poupado = transacoesDoMes.filter(t => t.tipo === 'poupanca').reduce((acc, t) => acc + t.valor, 0)
-  const resgatado = transacoesDoMes.filter(t => t.tipo === 'resgate').reduce((acc, t) => acc + t.valor, 0)
+  const entradasMes = transacoesDoMes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0)
+  const despesasMes = transacoesDoMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0)
+  const poupadoMes = transacoesDoMes.filter(t => t.tipo === 'poupanca').reduce((acc, t) => acc + t.valor, 0)
+  const resgatadoMes = transacoesDoMes.filter(t => t.tipo === 'resgate').reduce((acc, t) => acc + t.valor, 0)
   
   const despesasCredito = transacoesDoMes.filter(t => t.tipo === 'despesa' && t.metodo_pagamento === 'credito').reduce((acc, t) => acc + t.valor, 0)
   const despesasDebito = transacoesDoMes.filter(t => t.tipo === 'despesa' && (t.metodo_pagamento === 'debito' || !t.metodo_pagamento)).reduce((acc, t) => acc + t.valor, 0)
 
-  const totalPoupanca = poupado - resgatado
-  const saldoDisponivel = entradas - despesas - poupado + resgatado
+  // O Saldo do Mês abate apenas o que foi guardado NAQUELE mês
+  const saldoMensal = entradasMes - despesasMes - poupadoMes + resgatadoMes
 
+  // ==========================================
+  // 3. META FINANCEIRA (Baseada no Global)
+  // ==========================================
   const metaCalculo = parseFloat(metaExibicao.replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) || 0;
-  const porcentagemMeta = metaCalculo > 0 ? Math.min((totalPoupanca / metaCalculo) * 100, 100).toFixed(1) : 0;
+  const porcentagemMeta = metaCalculo > 0 ? Math.min((totalPoupancaGlobal / metaCalculo) * 100, 100).toFixed(1) : 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -120,10 +134,9 @@ function App() {
   if (!session) return <Login />
 
   return (
-    // Adicionado pb-20 (padding-bottom) para rolagem confortável no celular
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-3 md:p-10 font-sans pb-20 overflow-x-hidden">
       
-      {/* SELETOR DE MÊS - Centralizado no celular, à direita no desktop */}
+      {/* SELETOR DE MÊS */}
       <div className="max-w-6xl w-full flex justify-center md:justify-end items-center mb-6">
         <div className="bg-white px-4 py-3 md:py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
           <span className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-wider">Mês:</span>
@@ -136,23 +149,23 @@ function App() {
         </div>
       </div>
 
-      {/* 1. CARDS DE RESUMO - 2 colunas no celular (grid-cols-2) e 4 no PC (lg:grid-cols-4) */}
+      {/* 1. CARDS DE RESUMO */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl w-full mb-6">
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-indigo-500 flex flex-col justify-center">
           <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Saldo Mensal</p>
-          <p className={`text-base md:text-xl font-bold truncate ${saldoDisponivel >= 0 ? 'text-gray-800' : 'text-rose-600'}`}>{formatarMoeda(saldoDisponivel)}</p>
+          <p className={`text-base md:text-xl font-bold truncate ${saldoMensal >= 0 ? 'text-gray-800' : 'text-rose-600'}`}>{formatarMoeda(saldoMensal)}</p>
         </div>
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-emerald-500 flex flex-col justify-center">
-          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Entradas</p>
-          <p className="text-base md:text-xl font-bold text-emerald-600 truncate">{formatarMoeda(entradas)}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Entradas do Mês</p>
+          <p className="text-base md:text-xl font-bold text-emerald-600 truncate">{formatarMoeda(entradasMes)}</p>
         </div>
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-rose-500 flex flex-col justify-center">
-          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Saídas</p>
-          <p className="text-base md:text-xl font-bold text-rose-600 truncate">{formatarMoeda(despesas)}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Saídas do Mês</p>
+          <p className="text-base md:text-xl font-bold text-rose-600 truncate">{formatarMoeda(despesasMes)}</p>
         </div>
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-sky-500 flex flex-col justify-center">
-          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Guardado</p>
-          <p className="text-base md:text-xl font-bold text-sky-600 truncate">{formatarMoeda(totalPoupanca)}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Total Acumulado</p>
+          <p className="text-base md:text-xl font-bold text-sky-600 truncate">{formatarMoeda(totalPoupancaGlobal)}</p>
         </div>
       </div>
 
@@ -183,7 +196,7 @@ function App() {
         </div>
       </div>
 
-      {/* LAYOUT PRINCIPAL - Colunas no PC, Empilhado no Celular */}
+      {/* LAYOUT PRINCIPAL */}
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         
         {/* 3. FORMULÁRIO */}
@@ -203,7 +216,6 @@ function App() {
               setValor((Number(val)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}))
             }} className="w-full p-3 md:p-4 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg md:text-xl text-center" />
             
-            {/* Botões ajustados para toque */}
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setTipo('receita')} className={`py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs transition-all ${tipo === 'receita' ? 'bg-emerald-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>RECEITA</button>
               <button type="button" onClick={() => setTipo('despesa')} className={`py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs transition-all ${tipo === 'despesa' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>DESPESA</button>
@@ -256,7 +268,6 @@ function App() {
               <h2 className="text-base md:text-lg font-black text-gray-700 uppercase tracking-tighter">
                 Lançamentos do Mês
               </h2>
-              {/* Botões do filtro permitindo scroll no celular caso a tela seja muito pequena */}
               <div className="flex bg-gray-50 p-1 rounded-xl w-full sm:w-auto overflow-x-auto">
                 <button onClick={() => setFiltroLista('todos')} className={`flex-1 sm:flex-none px-3 py-2 md:py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all whitespace-nowrap ${filtroLista === 'todos' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}>Todos</button>
                 <button onClick={() => setFiltroLista('debito')} className={`flex-1 sm:flex-none px-3 py-2 md:py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all whitespace-nowrap ${filtroLista === 'debito' ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-gray-400'}`}>Débito/Pix</button>
@@ -287,7 +298,6 @@ function App() {
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                     </button>
                     <div className="flex flex-col min-w-0">
-                      {/* flex-wrap garante que os selos desçam de linha se a tela for muito fina */}
                       <div className="flex flex-wrap items-center gap-1 md:gap-2">
                         <p className="font-bold text-gray-700 text-xs md:text-sm leading-tight truncate max-w-[120px] sm:max-w-[200px]">{item.descricao}</p>
                         
