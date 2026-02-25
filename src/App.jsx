@@ -111,7 +111,7 @@ function App() {
         });
       }
       const { error } = await supabase.from('transacoes').insert(insercoes)
-      if (!error) { setDescricao(''); setValor(''); buscarTransacoes(); }
+      if (!error) { setDescricao(''); setValor(''); setParcelas(1); buscarTransacoes(); }
     }
     setCarregando(false)
   }
@@ -125,13 +125,11 @@ function App() {
 
   const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   
-  // Função para formatar data para o padrão Brasileiro DD/MM/AAAA
   const formatarDataBR = (dataIso) => {
     const data = new Date(dataIso);
     return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
-  // Função para formatar o mês do seletor em Português
   const formatarMesBR = (mesIso) => {
     const [ano, mes] = mesIso.split('-');
     const data = new Date(ano, mes - 1);
@@ -143,23 +141,12 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-3 md:p-10 font-sans pb-20 overflow-x-hidden text-gray-800">
       
-      {/* HEADER E NAVEGAÇÃO */}
+      {/* NAVEGAÇÃO E SELETOR */}
       <div className="max-w-6xl w-full flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100 w-full md:w-auto">
-          <button 
-            onClick={() => setAbaAtiva('lancamentos')}
-            className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'lancamentos' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            Lançamentos
-          </button>
-          <button 
-            onClick={() => setAbaAtiva('analise')}
-            className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'analise' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            Visão Geral
-          </button>
+          <button onClick={() => setAbaAtiva('lancamentos')} className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'lancamentos' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400'}`}>Lançamentos</button>
+          <button onClick={() => setAbaAtiva('analise')} className={`flex-1 md:flex-none px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'analise' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400'}`}>Visão Geral</button>
         </div>
-
         <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3 w-full md:w-auto justify-between">
           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{formatarMesBR(mesFiltro)}</span>
           <input type="month" value={mesFiltro} onChange={(e) => setMesFiltro(e.target.value)} className="bg-transparent border-none outline-none font-bold text-indigo-600 cursor-pointer text-sm" />
@@ -169,28 +156,28 @@ function App() {
       {/* CARDS DE RESUMO */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl w-full mb-8">
         <div className="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-indigo-500">
-          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Saldo Livre</p>
+          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Saldo em Conta</p>
           <p className={`text-sm md:text-lg font-black ${saldoConta >= 0 ? 'text-gray-800' : 'text-rose-600'}`}>{formatarMoeda(saldoConta)}</p>
         </div>
         <div className="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-emerald-500">
-          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Receitas</p>
+          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Entradas (mês)</p>
           <p className="text-sm md:text-lg font-black text-emerald-600">{formatarMoeda(entradasMes)}</p>
         </div>
         <div className="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-rose-500">
-          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Despesas</p>
+          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Saídas (mês)</p>
           <p className="text-sm md:text-lg font-black text-rose-600">{formatarMoeda(despesasMes)}</p>
         </div>
         <div className="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-sky-500">
-          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Poupança Total</p>
+          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Poupança Acumulada</p>
           <p className="text-sm md:text-lg font-black text-sky-600">{formatarMoeda(totalPoupanca)}</p>
         </div>
       </div>
 
       {abaAtiva === 'lancamentos' ? (
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Formulário com 4 Botões Restaurados */}
-          <div className={`bg-white p-6 md:p-8 rounded-3xl shadow-xl border h-fit transition-all duration-300 ${editandoId ? 'border-amber-400 ring-4 ring-amber-50' : 'border-gray-100'}`}>
-            <h2 className="text-xl font-black text-gray-800 mb-6 text-center italic uppercase tracking-tighter">{editandoId ? 'A Editar Registo' : 'Financeiro da Luh'}</h2>
+          {/* Formulário Completo */}
+          <div className={`bg-white p-6 md:p-8 rounded-3xl shadow-xl border h-fit ${editandoId ? 'border-amber-400 ring-4 ring-amber-50' : 'border-gray-100'}`}>
+            <h2 className="text-xl font-black text-gray-800 mb-6 text-center italic uppercase tracking-tighter">{editandoId ? 'Editar Registo' : 'Financeiro da Luh'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex gap-2">
                 <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-3 rounded-2xl border border-gray-100 bg-gray-50 outline-none text-xs font-bold text-gray-500 cursor-pointer" />
@@ -201,59 +188,66 @@ function App() {
               }} className="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50 outline-none font-black text-2xl text-center text-indigo-600" />
               
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setTipo('receita')} className={`py-3 rounded-xl font-black text-[10px] transition-all uppercase tracking-widest ${tipo === 'receita' ? 'bg-emerald-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Receita</button>
-                <button type="button" onClick={() => setTipo('despesa')} className={`py-3 rounded-xl font-black text-[10px] transition-all uppercase tracking-widest ${tipo === 'despesa' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Despesa</button>
-                <button type="button" onClick={() => setTipo('poupanca')} className={`py-3 rounded-xl font-black text-[10px] transition-all uppercase tracking-widest ${tipo === 'poupanca' ? 'bg-sky-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Guardar</button>
-                <button type="button" onClick={() => setTipo('resgate')} className={`py-3 rounded-xl font-black text-[10px] transition-all uppercase tracking-widest ${tipo === 'resgate' ? 'bg-amber-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Resgatar</button>
+                <button type="button" onClick={() => setTipo('receita')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest ${tipo === 'receita' ? 'bg-emerald-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Receita</button>
+                <button type="button" onClick={() => setTipo('despesa')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest ${tipo === 'despesa' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Despesa</button>
+                <button type="button" onClick={() => setTipo('poupanca')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest ${tipo === 'poupanca' ? 'bg-sky-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Guardar</button>
+                <button type="button" onClick={() => setTipo('resgate')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest ${tipo === 'resgate' ? 'bg-amber-500 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>Resgatar</button>
               </div>
 
               {tipo === 'despesa' && (
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3 rounded-xl font-bold text-[9px] border-2 transition-all ${metodoPagamento === 'debito' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-transparent bg-gray-50 text-gray-400'}`}>DÉBITO / PIX</button>
-                  <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3 rounded-xl font-bold text-[9px] border-2 transition-all ${metodoPagamento === 'credito' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-transparent bg-gray-50 text-gray-400'}`}>CARTÃO CRÉDITO</button>
-                </div>
+                <>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3 rounded-xl font-bold text-[9px] border-2 ${metodoPagamento === 'debito' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-transparent bg-gray-50 text-gray-400'}`}>DÉBITO / PIX</button>
+                    <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3 rounded-xl font-bold text-[9px] border-2 ${metodoPagamento === 'credito' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-transparent bg-gray-50 text-gray-400'}`}>CARTÃO CRÉDITO</button>
+                  </div>
+                  {!editandoId && metodoPagamento === 'credito' && (
+                    <div className="flex items-center justify-between bg-orange-50 p-3 rounded-xl border border-orange-100 mt-2">
+                      <span className="text-[10px] font-black text-orange-800 uppercase">Parcelar em:</span>
+                      <div className="flex items-center gap-2">
+                        <input type="number" min="1" max="48" value={parcelas} onChange={(e) => setParcelas(e.target.value)} className="w-12 p-1 rounded-lg border border-orange-200 text-center font-bold text-gray-700 text-xs" />
+                        <span className="text-xs font-bold text-orange-600">x</span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
-              <button type="submit" disabled={carregando} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all mt-4 text-xs">
-                {carregando ? 'Processando...' : editandoId ? 'Salvar Alterações' : 'Confirmar Lançamento'}
+              <button type="submit" disabled={carregando} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest hover:bg-indigo-700 transition-all mt-4 text-xs">
+                {carregando ? 'Processando...' : 'Confirmar Lançamento'}
               </button>
             </form>
           </div>
 
-          {/* Histórico com Data em formato BR */}
+          {/* Histórico BR */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 h-fit max-h-[600px] overflow-y-auto">
-             <div className="flex justify-between items-center mb-6">
+             <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
                 <h3 className="font-black text-gray-700 uppercase text-xs tracking-tighter">Histórico de {formatarMesBR(mesFiltro)}</h3>
                 <span className="text-[10px] bg-gray-100 px-2 py-1 rounded-full font-bold text-gray-400">{transacoesDoMes.length}</span>
              </div>
              <div className="space-y-3">
-               {transacoesDoMes.length === 0 ? (
-                 <p className="text-center text-gray-300 text-xs italic py-10 uppercase tracking-widest font-bold">Nenhum registo este mês</p>
-               ) : (
-                 transacoesDoMes.map(item => (
-                   <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl group transition-all hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100">
-                      <div className="flex gap-3 items-center">
-                         <button onClick={() => deletarTransacao(item.id)} className="text-gray-200 hover:text-rose-500 transition-colors"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
-                         <div>
-                            <p className="text-xs font-black text-gray-700 leading-none mb-1">{item.descricao}</p>
-                            <p className="text-[9px] text-gray-400 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
-                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>{item.tipo === 'receita' ? '+' : '-'} {formatarMoeda(item.valor)}</p>
-                        {item.metodo_pagamento === 'credito' && <p className="text-[7px] font-black text-orange-400 uppercase tracking-tighter">Cartão</p>}
-                      </div>
-                   </div>
-                 ))
-               )}
+               {transacoesDoMes.map(item => (
+                 <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100 transition-all">
+                    <div className="flex gap-3 items-center">
+                       <button onClick={() => deletarTransacao(item.id)} className="text-gray-200 hover:text-rose-500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
+                       <div>
+                          <p className="text-xs font-black text-gray-700 leading-none mb-1">{item.descricao}</p>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
+                       </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>{item.tipo === 'receita' ? '+' : '-'} {formatarMoeda(item.valor)}</p>
+                      {item.metodo_pagamento === 'credito' && <p className="text-[7px] font-black text-orange-400 uppercase tracking-tighter">{item.parcela_atual}/{item.total_parcelas} Cartão</p>}
+                    </div>
+                 </div>
+               ))}
              </div>
           </div>
         </div>
       ) : (
-        /* ABA DE VISÃO GERAL */
-        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-500">
+        /* VISÃO GERAL */
+        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center min-h-[400px]">
-            <h3 className="font-black text-gray-400 uppercase text-[10px] tracking-[0.3em] mb-10">Análise de Gastos</h3>
+            <h3 className="font-black text-gray-400 uppercase text-[10px] tracking-[0.3em] mb-10 text-center">Análise de Gastos</h3>
             {dadosGrafico.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -267,13 +261,9 @@ function App() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-10">
-                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83M22 12A10 10 0 0 0 12 2v10z"></path></svg></div>
-                 <p className="text-gray-300 text-xs font-bold uppercase tracking-widest leading-relaxed">Lance despesas para <br/> gerar o gráfico</p>
-              </div>
+              <div className="flex flex-col items-center justify-center h-full text-center"><p className="text-gray-300 text-xs font-bold uppercase tracking-widest">Lance dados para gerar o gráfico</p></div>
             )}
           </div>
-
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
             <div>
               <h3 className="font-black text-gray-800 uppercase text-xs mb-6 tracking-[0.2em]">Meta de Poupança</h3>
@@ -286,26 +276,11 @@ function App() {
                     }} className="text-sm font-black text-gray-700 bg-gray-50 px-2 py-1 rounded-lg border-none outline-none text-right w-28" />
                  </div>
               </div>
-              <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                 <div className="h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-indigo-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div>
-              </div>
-            </div>
-            
-            <div className="mt-10 grid grid-cols-2 gap-4">
-               <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm">
-                  <p className="text-[8px] text-emerald-600 font-black uppercase tracking-widest mb-1">Guardado</p>
-                  <p className="text-sm font-black text-emerald-700">{formatarMoeda(poupadoMes)}</p>
-               </div>
-               <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm">
-                  <p className="text-[8px] text-amber-600 font-black uppercase tracking-widest mb-1">Resgatado</p>
-                  <p className="text-sm font-black text-amber-700">{formatarMoeda(resgatadoMes)}</p>
-               </div>
+              <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden shadow-inner"><div className="h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-indigo-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div></div>
             </div>
           </div>
         </div>
       )}
-
-      {/* FOOTER */}
       <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-gray-300 hover:text-rose-500 uppercase tracking-[0.5em] transition-all py-4 px-8 border border-transparent hover:border-gray-200 rounded-full">Sair da Conta</button>
     </div>
   )
