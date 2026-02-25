@@ -5,6 +5,8 @@ import { Login } from './Login'
 function App() {
   const [session, setSession] = useState(null)
   const [transacoes, setTransacoes] = useState([])
+  
+  const [dataLancamento, setDataLancamento] = useState(new Date().toISOString().substring(0, 10))
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [tipo, setTipo] = useState('despesa')
@@ -13,6 +15,7 @@ function App() {
   const [carregando, setCarregando] = useState(false)
   const [filtroLista, setFiltroLista] = useState('todos') 
   const [metaExibicao, setMetaExibicao] = useState('R$ 2.000,00')
+  const [editandoId, setEditandoId] = useState(null)
 
   const dataAtual = new Date();
   const mesAtualPadrao = `${dataAtual.getFullYear()}-${String(dataAtual.getMonth() + 1).padStart(2, '0')}`;
@@ -40,37 +43,58 @@ function App() {
   useEffect(() => { if (session) buscarTransacoes() }, [session])
 
   // ==========================================
-  // 1. CÁLCULOS GLOBAIS (Fixos / Acumulados)
+  // LÓGICA DE CÁLCULO FINANCEIRO PROFISSIONAL
   // ==========================================
-  // Olha para TODAS as transações, ignorando o mês selecionado
-  const poupadoGlobal = transacoes.filter(t => t.tipo === 'poupanca').reduce((acc, t) => acc + t.valor, 0)
-  const resgatadoGlobal = transacoes.filter(t => t.tipo === 'resgate').reduce((acc, t) => acc + t.valor, 0)
-  const totalPoupancaGlobal = poupadoGlobal - resgatadoGlobal
+  
+  // 1. O que aconteceu ESTRITAMENTE neste mês (Para o histórico visual)
+  const transacoesDoMes = transacoes.filter(t => t.data_transacao.substring(0, 7) === mesFiltro);
+  
+  // 2. O que aconteceu ATÉ este mês (Para o Saldo Acumulado e Poupança Fixa)
+  const transacoesAteMes = transacoes.filter(t => t.data_transacao.substring(0, 7) <= mesFiltro);
 
-  // ==========================================
-  // 2. CÁLCULOS MENSAIS (Respeitam o Filtro)
-  // ==========================================
-  const transacoesDoMes = transacoes.filter(t => {
-    const mesTransacao = t.data_transacao.substring(0, 7);
-    return mesTransacao === mesFiltro;
-  });
-
+  // Valores APENAS do Mês (Fluxo de Caixa)
   const entradasMes = transacoesDoMes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0)
   const despesasMes = transacoesDoMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0)
-  const poupadoMes = transacoesDoMes.filter(t => t.tipo === 'poupanca').reduce((acc, t) => acc + t.valor, 0)
-  const resgatadoMes = transacoesDoMes.filter(t => t.tipo === 'resgate').reduce((acc, t) => acc + t.valor, 0)
-  
   const despesasCredito = transacoesDoMes.filter(t => t.tipo === 'despesa' && t.metodo_pagamento === 'credito').reduce((acc, t) => acc + t.valor, 0)
   const despesasDebito = transacoesDoMes.filter(t => t.tipo === 'despesa' && (t.metodo_pagamento === 'debito' || !t.metodo_pagamento)).reduce((acc, t) => acc + t.valor, 0)
 
-  // O Saldo do Mês abate apenas o que foi guardado NAQUELE mês
-  const saldoMensal = entradasMes - despesasMes - poupadoMes + resgatadoMes
+  // Valores ACUMULADOS (Patrimônio)
+  const receitasAcumuladas = transacoesAteMes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0)
+  const despesasAcumuladas = transacoesAteMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0)
+  const poupadoAcumulado = transacoesAteMes.filter(t => t.tipo === 'poupanca').reduce((acc, t) => acc + t.valor, 0)
+  const resgatadoAcumulado = transacoesAteMes.filter(t => t.tipo === 'resgate').reduce((acc, t) => acc + t.valor, 0)
 
-  // ==========================================
-  // 3. META FINANCEIRA (Baseada no Global)
-  // ==========================================
+  // O Total Real da Conta e da Poupança herda tudo dos meses anteriores
+  const totalPoupanca = poupadoAcumulado - resgatadoAcumulado;
+  const saldoConta = receitasAcumuladas - despesasAcumuladas - poupadoAcumulado + resgatadoAcumulado;
+
+  // Lógica da Meta
   const metaCalculo = parseFloat(metaExibicao.replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) || 0;
-  const porcentagemMeta = metaCalculo > 0 ? Math.min((totalPoupancaGlobal / metaCalculo) * 100, 100).toFixed(1) : 0;
+  const porcentagemMeta = metaCalculo > 0 ? Math.min((totalPoupanca / metaCalculo) * 100, 100).toFixed(1) : 0;
+
+  const prepararEdicao = (item) => {
+    setEditandoId(item.id);
+    setDescricao(item.descricao);
+    setValor(Number(item.valor).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
+    setTipo(item.tipo);
+    setMetodoPagamento(item.metodo_pagamento || 'debito');
+    setParcelas(1);
+    
+    if (item.data_transacao) {
+      setDataLancamento(item.data_transacao.substring(0, 10));
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const cancelarEdicao = () => {
+    setEditandoId(null);
+    setDescricao('');
+    setValor('');
+    setTipo('despesa');
+    setMetodoPagamento('debito');
+    setParcelas(1);
+    setDataLancamento(new Date().toISOString().substring(0, 10));
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -79,44 +103,61 @@ function App() {
     const valorTotalNumerico = parseFloat(valor.replace("R$", "").replace(/\./g, "").replace(",", ".").trim())
     const metodoFinal = tipo === 'despesa' ? metodoPagamento : null;
     
-    const numParcelas = (tipo === 'despesa' && metodoPagamento === 'credito') ? Number(parcelas) : 1;
-    const valorPorParcela = numParcelas > 1 ? (valorTotalNumerico / numParcelas) : valorTotalNumerico;
+    // Separa a data escolhida com segurança
+    const [anoStr, mesStr, diaStr] = dataLancamento.split('-');
+    const ano = parseInt(anoStr, 10);
+    const mes = parseInt(mesStr, 10) - 1; 
+    const dia = parseInt(diaStr, 10);
+    
+    if (editandoId) {
+      const dataUpdate = new Date(ano, mes, dia, 12, 0, 0);
+      const { error } = await supabase
+        .from('transacoes')
+        .update({ 
+          descricao, 
+          valor: valorTotalNumerico, 
+          tipo, 
+          metodo_pagamento: metodoFinal,
+          data_transacao: dataUpdate.toISOString()
+        })
+        .eq('id', editandoId)
 
-    const insercoes = [];
-
-    for (let i = 0; i < numParcelas; i++) {
-      const dataParcela = new Date();
-      dataParcela.setMonth(dataParcela.getMonth() + i);
-
-      insercoes.push({
-        descricao: descricao,
-        valor: valorPorParcela,
-        tipo: tipo,
-        metodo_pagamento: metodoFinal,
-        parcela_atual: i + 1,
-        total_parcelas: numParcelas,
-        data_transacao: dataParcela.toISOString(),
-        user_id: session.user.id
-      });
-    }
-
-    const { error } = await supabase.from('transacoes').insert(insercoes)
-
-    if (!error) { 
-      setDescricao(''); 
-      setValor(''); 
-      setMetodoPagamento('debito'); 
-      setParcelas(1); 
-      buscarTransacoes() 
+      if (!error) { cancelarEdicao(); buscarTransacoes(); }
     } else {
-      console.error(error);
-      alert("Erro ao salvar a transação.");
+      const numParcelas = (tipo === 'despesa' && metodoPagamento === 'credito') ? Number(parcelas) : 1;
+      const valorPorParcela = numParcelas > 1 ? (valorTotalNumerico / numParcelas) : valorTotalNumerico;
+      const insercoes = [];
+
+      // NOVO: Cálculo seguro de parcelamento (Evita o Bug do dia 31 de Fevereiro)
+      for (let i = 0; i < numParcelas; i++) {
+        let m = mes + i;
+        let y = ano + Math.floor(m / 12);
+        m = m % 12; // Garante que o mês 12 vire Janeiro do ano seguinte
+        
+        let d = new Date(y, m, 1, 12, 0, 0);
+        let ultimoDiaDoMes = new Date(y, m + 1, 0).getDate();
+        d.setDate(Math.min(dia, ultimoDiaDoMes)); // Se era dia 31 e o mês só tem 28, trava no 28
+
+        insercoes.push({
+          descricao: descricao,
+          valor: valorPorParcela,
+          tipo: tipo,
+          metodo_pagamento: metodoFinal,
+          parcela_atual: i + 1,
+          total_parcelas: numParcelas,
+          data_transacao: d.toISOString(),
+          user_id: session.user.id
+        });
+      }
+
+      const { error } = await supabase.from('transacoes').insert(insercoes)
+      if (!error) { cancelarEdicao(); buscarTransacoes(); }
     }
     setCarregando(false)
   }
 
   const deletarTransacao = async (id) => {
-    if (confirm("Deseja apagar este registro? (Se for parcelado, apagará apenas esta parcela)")) {
+    if (confirm("Deseja apagar este registro?")) {
       const { error } = await supabase.from('transacoes').delete().eq('id', id)
       if (!error) buscarTransacoes()
     }
@@ -152,20 +193,20 @@ function App() {
       {/* 1. CARDS DE RESUMO */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl w-full mb-6">
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-indigo-500 flex flex-col justify-center">
-          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Saldo Mensal</p>
-          <p className={`text-base md:text-xl font-bold truncate ${saldoMensal >= 0 ? 'text-gray-800' : 'text-rose-600'}`}>{formatarMoeda(saldoMensal)}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Saldo em Conta</p>
+          <p className={`text-base md:text-xl font-bold truncate ${saldoConta >= 0 ? 'text-gray-800' : 'text-rose-600'}`}>{formatarMoeda(saldoConta)}</p>
         </div>
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-emerald-500 flex flex-col justify-center">
-          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Entradas do Mês</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Entradas (Mês)</p>
           <p className="text-base md:text-xl font-bold text-emerald-600 truncate">{formatarMoeda(entradasMes)}</p>
         </div>
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-rose-500 flex flex-col justify-center">
-          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Saídas do Mês</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Saídas (Mês)</p>
           <p className="text-base md:text-xl font-bold text-rose-600 truncate">{formatarMoeda(despesasMes)}</p>
         </div>
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border-l-4 border-sky-500 flex flex-col justify-center">
-          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Total Acumulado</p>
-          <p className="text-base md:text-xl font-bold text-sky-600 truncate">{formatarMoeda(totalPoupancaGlobal)}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase truncate">Poupança Acumulada</p>
+          <p className="text-base md:text-xl font-bold text-sky-600 truncate">{formatarMoeda(totalPoupanca)}</p>
         </div>
       </div>
 
@@ -200,17 +241,30 @@ function App() {
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         
         {/* 3. FORMULÁRIO */}
-        <div className="bg-white p-5 md:p-8 rounded-3xl shadow-xl border border-gray-100 h-fit">
-          <h1 className="text-xl md:text-2xl font-black text-gray-800 mb-6 text-center italic">Financeiro da Luh</h1>
+        <div className={`bg-white p-5 md:p-8 rounded-3xl shadow-xl border h-fit transition-all duration-300 ${editandoId ? 'border-amber-400 ring-4 ring-amber-50' : 'border-gray-100'}`}>
+          <h1 className="text-xl md:text-2xl font-black text-gray-800 mb-6 text-center italic">
+            {editandoId ? 'Editando Registro' : 'Financeiro da Luh'}
+          </h1>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input 
-              required 
-              type="text" 
-              placeholder={placeholders[tipo]} 
-              value={descricao} 
-              onChange={(e) => setDescricao(e.target.value)} 
-              className="w-full p-3 md:p-4 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base" 
-            />
+            
+            <div className="flex gap-2">
+              <input 
+                type="date"
+                required
+                value={dataLancamento}
+                onChange={(e) => setDataLancamento(e.target.value)}
+                className="w-1/3 p-3 md:p-4 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-xs md:text-sm text-gray-500 font-bold cursor-pointer"
+              />
+              <input 
+                required 
+                type="text" 
+                placeholder={placeholders[tipo]} 
+                value={descricao} 
+                onChange={(e) => setDescricao(e.target.value)} 
+                className="w-2/3 p-3 md:p-4 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm md:text-base" 
+              />
+            </div>
+
             <input required type="text" placeholder="R$ 0,00" value={valor} onChange={(e) => {
               let val = e.target.value.replace(/\D/g, "")
               setValor((Number(val)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}))
@@ -236,7 +290,7 @@ function App() {
               </div>
             )}
 
-            {tipo === 'despesa' && metodoPagamento === 'credito' && (
+            {!editandoId && tipo === 'despesa' && metodoPagamento === 'credito' && (
               <div className="flex flex-col md:flex-row items-center justify-between bg-orange-50 p-3 md:p-4 rounded-xl border border-orange-100 mt-2 gap-3">
                 <span className="text-[10px] md:text-xs font-bold text-orange-800 uppercase">Parcelar em:</span>
                 <div className="flex items-center gap-2 w-full md:w-auto justify-center">
@@ -253,9 +307,16 @@ function App() {
               </div>
             )}
 
-            <button type="submit" disabled={carregando} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-base md:text-lg hover:bg-indigo-700 transition-all shadow-lg mt-2">
-              {carregando ? 'Processando...' : 'Confirmar Lançamento'}
-            </button>
+            <div className="flex gap-2 mt-4">
+              {editandoId && (
+                <button type="button" onClick={cancelarEdicao} className="w-1/3 bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold text-sm md:text-base hover:bg-gray-200 transition-all">
+                  Cancelar
+                </button>
+              )}
+              <button type="submit" disabled={carregando} className={`${editandoId ? 'w-2/3 bg-amber-500 hover:bg-amber-600' : 'w-full bg-indigo-600 hover:bg-indigo-700'} text-white py-4 rounded-2xl font-bold text-base md:text-lg transition-all shadow-lg`}>
+                {carregando ? 'Processando...' : editandoId ? 'Salvar Alterações' : 'Confirmar Lançamento'}
+              </button>
+            </div>
           </form>
           <button onClick={() => supabase.auth.signOut()} className="w-full mt-6 text-[10px] text-gray-400 hover:text-rose-500 font-bold tracking-widest uppercase text-center">Sair da Conta</button>
         </div>
@@ -289,17 +350,24 @@ function App() {
 
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 md:pr-2">
             {transacoesExibidas.length === 0 ? (
-              <p className="text-center text-gray-400 text-xs md:text-sm py-8 italic">Nenhum lançamento neste filtro.</p>
+              <p className="text-center text-gray-400 text-xs md:text-sm py-8 italic">Nenhum registro neste filtro.</p>
             ) : (
               transacoesExibidas.map((item) => (
-                <div key={item.id} className="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:border-indigo-100">
+                <div key={item.id} className="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:border-indigo-100 group">
                   <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
-                    <button onClick={() => deletarTransacao(item.id)} className="p-1 md:p-2 text-gray-200 hover:text-rose-500 transition-colors flex-shrink-0" title="Excluir">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                    </button>
-                    <div className="flex flex-col min-w-0">
+                    
+                    <div className="flex flex-col sm:flex-row gap-1">
+                      <button onClick={() => deletarTransacao(item.id)} className="p-1 text-gray-300 hover:text-rose-500 transition-colors flex-shrink-0" title="Excluir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                      </button>
+                      <button onClick={() => prepararEdicao(item)} className="p-1 text-gray-300 hover:text-amber-500 transition-colors flex-shrink-0" title="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col min-w-0 ml-1">
                       <div className="flex flex-wrap items-center gap-1 md:gap-2">
-                        <p className="font-bold text-gray-700 text-xs md:text-sm leading-tight truncate max-w-[120px] sm:max-w-[200px]">{item.descricao}</p>
+                        <p className="font-bold text-gray-700 text-xs md:text-sm leading-tight truncate max-w-[100px] sm:max-w-[180px]">{item.descricao}</p>
                         
                         {item.tipo === 'despesa' && item.metodo_pagamento === 'credito' && (
                           <span className="text-[8px] md:text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full uppercase font-black tracking-wider border border-orange-200 whitespace-nowrap">Crédito</span>
