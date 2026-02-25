@@ -6,7 +6,13 @@ function App() {
   const [session, setSession] = useState(null)
   const [transacoes, setTransacoes] = useState([])
   
+  const dataAtual = new Date();
+  const mesAtualPadrao = `${dataAtual.getFullYear()}-${String(dataAtual.getMonth() + 1).padStart(2, '0')}`;
+  const [mesFiltro, setMesFiltro] = useState(mesAtualPadrao);
+
+  // Estado da data sincronizado com o filtro
   const [dataLancamento, setDataLancamento] = useState(new Date().toISOString().substring(0, 10))
+  
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [tipo, setTipo] = useState('despesa')
@@ -16,10 +22,6 @@ function App() {
   const [filtroLista, setFiltroLista] = useState('todos') 
   const [metaExibicao, setMetaExibicao] = useState('R$ 2.000,00')
   const [editandoId, setEditandoId] = useState(null)
-
-  const dataAtual = new Date();
-  const mesAtualPadrao = `${dataAtual.getFullYear()}-${String(dataAtual.getMonth() + 1).padStart(2, '0')}`;
-  const [mesFiltro, setMesFiltro] = useState(mesAtualPadrao);
 
   const placeholders = {
     receita: "O que entrou? (ex: Salário...)",
@@ -42,33 +44,42 @@ function App() {
 
   useEffect(() => { if (session) buscarTransacoes() }, [session])
 
+  // --- INTELIGÊNCIA DE UX: Sincroniza a data do formulário com o filtro superior ---
+  useEffect(() => {
+    const [ano, mes] = mesFiltro.split('-');
+    const hoje = new Date();
+    const mesAtualReal = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Se o filtro estiver no mês atual, usa o dia de hoje. Se for outro mês, usa o dia 1º.
+    if (mesFiltro === mesAtualReal) {
+      setDataLancamento(hoje.toISOString().substring(0, 10));
+    } else {
+      setDataLancamento(`${ano}-${mes}-01`);
+    }
+  }, [mesFiltro]);
+
   // ==========================================
-  // LÓGICA DE CÁLCULO FINANCEIRO PROFISSIONAL
+  // LÓGICA DE CÁLCULO FINANCEIRO
   // ==========================================
   
-  // 1. O que aconteceu ESTRITAMENTE neste mês (Para o histórico visual)
   const transacoesDoMes = transacoes.filter(t => t.data_transacao.substring(0, 7) === mesFiltro);
-  
-  // 2. O que aconteceu ATÉ este mês (Para o Saldo Acumulado e Poupança Fixa)
   const transacoesAteMes = transacoes.filter(t => t.data_transacao.substring(0, 7) <= mesFiltro);
 
-  // Valores APENAS do Mês (Fluxo de Caixa)
+  // Valores APENAS do Mês (Fluxo)
   const entradasMes = transacoesDoMes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0)
   const despesasMes = transacoesDoMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0)
   const despesasCredito = transacoesDoMes.filter(t => t.tipo === 'despesa' && t.metodo_pagamento === 'credito').reduce((acc, t) => acc + t.valor, 0)
   const despesasDebito = transacoesDoMes.filter(t => t.tipo === 'despesa' && (t.metodo_pagamento === 'debito' || !t.metodo_pagamento)).reduce((acc, t) => acc + t.valor, 0)
 
-  // Valores ACUMULADOS (Patrimônio)
+  // Valores ACUMULADOS (Patrimônio Permanente)
   const receitasAcumuladas = transacoesAteMes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0)
   const despesasAcumuladas = transacoesAteMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0)
   const poupadoAcumulado = transacoesAteMes.filter(t => t.tipo === 'poupanca').reduce((acc, t) => acc + t.valor, 0)
   const resgatadoAcumulado = transacoesAteMes.filter(t => t.tipo === 'resgate').reduce((acc, t) => acc + t.valor, 0)
 
-  // O Total Real da Conta e da Poupança herda tudo dos meses anteriores
   const totalPoupanca = poupadoAcumulado - resgatadoAcumulado;
   const saldoConta = receitasAcumuladas - despesasAcumuladas - poupadoAcumulado + resgatadoAcumulado;
 
-  // Lógica da Meta
   const metaCalculo = parseFloat(metaExibicao.replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) || 0;
   const porcentagemMeta = metaCalculo > 0 ? Math.min((totalPoupanca / metaCalculo) * 100, 100).toFixed(1) : 0;
 
@@ -79,10 +90,7 @@ function App() {
     setTipo(item.tipo);
     setMetodoPagamento(item.metodo_pagamento || 'debito');
     setParcelas(1);
-    
-    if (item.data_transacao) {
-      setDataLancamento(item.data_transacao.substring(0, 10));
-    }
+    if (item.data_transacao) setDataLancamento(item.data_transacao.substring(0, 10));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -93,7 +101,9 @@ function App() {
     setTipo('despesa');
     setMetodoPagamento('debito');
     setParcelas(1);
-    setDataLancamento(new Date().toISOString().substring(0, 10));
+    // Retorna a data para sincronizar com o filtro atual
+    const [ano, mes] = mesFiltro.split('-');
+    setDataLancamento(`${ano}-${mes}-01`);
   }
 
   const handleSubmit = async (e) => {
@@ -103,7 +113,6 @@ function App() {
     const valorTotalNumerico = parseFloat(valor.replace("R$", "").replace(/\./g, "").replace(",", ".").trim())
     const metodoFinal = tipo === 'despesa' ? metodoPagamento : null;
     
-    // Separa a data escolhida com segurança
     const [anoStr, mesStr, diaStr] = dataLancamento.split('-');
     const ano = parseInt(anoStr, 10);
     const mes = parseInt(mesStr, 10) - 1; 
@@ -111,16 +120,9 @@ function App() {
     
     if (editandoId) {
       const dataUpdate = new Date(ano, mes, dia, 12, 0, 0);
-      const { error } = await supabase
-        .from('transacoes')
-        .update({ 
-          descricao, 
-          valor: valorTotalNumerico, 
-          tipo, 
-          metodo_pagamento: metodoFinal,
-          data_transacao: dataUpdate.toISOString()
-        })
-        .eq('id', editandoId)
+      const { error } = await supabase.from('transacoes').update({ 
+          descricao, valor: valorTotalNumerico, tipo, metodo_pagamento: metodoFinal, data_transacao: dataUpdate.toISOString()
+        }).eq('id', editandoId)
 
       if (!error) { cancelarEdicao(); buscarTransacoes(); }
     } else {
@@ -128,25 +130,17 @@ function App() {
       const valorPorParcela = numParcelas > 1 ? (valorTotalNumerico / numParcelas) : valorTotalNumerico;
       const insercoes = [];
 
-      // NOVO: Cálculo seguro de parcelamento (Evita o Bug do dia 31 de Fevereiro)
       for (let i = 0; i < numParcelas; i++) {
         let m = mes + i;
         let y = ano + Math.floor(m / 12);
-        m = m % 12; // Garante que o mês 12 vire Janeiro do ano seguinte
+        m = m % 12; 
         
         let d = new Date(y, m, 1, 12, 0, 0);
         let ultimoDiaDoMes = new Date(y, m + 1, 0).getDate();
-        d.setDate(Math.min(dia, ultimoDiaDoMes)); // Se era dia 31 e o mês só tem 28, trava no 28
+        d.setDate(Math.min(dia, ultimoDiaDoMes)); 
 
         insercoes.push({
-          descricao: descricao,
-          valor: valorPorParcela,
-          tipo: tipo,
-          metodo_pagamento: metodoFinal,
-          parcela_atual: i + 1,
-          total_parcelas: numParcelas,
-          data_transacao: d.toISOString(),
-          user_id: session.user.id
+          descricao: descricao, valor: valorPorParcela, tipo: tipo, metodo_pagamento: metodoFinal, parcela_atual: i + 1, total_parcelas: numParcelas, data_transacao: d.toISOString(), user_id: session.user.id
         });
       }
 
@@ -157,7 +151,7 @@ function App() {
   }
 
   const deletarTransacao = async (id) => {
-    if (confirm("Deseja apagar este registro?")) {
+    if (confirm("Deseja apagar este registo?")) {
       const { error } = await supabase.from('transacoes').delete().eq('id', id)
       if (!error) buscarTransacoes()
     }
@@ -243,7 +237,7 @@ function App() {
         {/* 3. FORMULÁRIO */}
         <div className={`bg-white p-5 md:p-8 rounded-3xl shadow-xl border h-fit transition-all duration-300 ${editandoId ? 'border-amber-400 ring-4 ring-amber-50' : 'border-gray-100'}`}>
           <h1 className="text-xl md:text-2xl font-black text-gray-800 mb-6 text-center italic">
-            {editandoId ? 'Editando Registro' : 'Financeiro da Luh'}
+            {editandoId ? 'A Editar Registo' : 'Financeiro da Luh'}
           </h1>
           <form onSubmit={handleSubmit} className="space-y-4">
             
@@ -314,11 +308,11 @@ function App() {
                 </button>
               )}
               <button type="submit" disabled={carregando} className={`${editandoId ? 'w-2/3 bg-amber-500 hover:bg-amber-600' : 'w-full bg-indigo-600 hover:bg-indigo-700'} text-white py-4 rounded-2xl font-bold text-base md:text-lg transition-all shadow-lg`}>
-                {carregando ? 'Processando...' : editandoId ? 'Salvar Alterações' : 'Confirmar Lançamento'}
+                {carregando ? 'A Processar...' : editandoId ? 'Salvar Alterações' : 'Confirmar Lançamento'}
               </button>
             </div>
           </form>
-          <button onClick={() => supabase.auth.signOut()} className="w-full mt-6 text-[10px] text-gray-400 hover:text-rose-500 font-bold tracking-widest uppercase text-center">Sair da Conta</button>
+          <button onClick={() => supabase.auth.signOut()} className="w-full mt-6 text-[10px] text-gray-400 hover:text-rose-500 font-bold tracking-widest uppercase text-center">Terminar Sessão</button>
         </div>
 
         {/* 4. HISTÓRICO AVANÇADO */}
@@ -350,7 +344,7 @@ function App() {
 
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 md:pr-2">
             {transacoesExibidas.length === 0 ? (
-              <p className="text-center text-gray-400 text-xs md:text-sm py-8 italic">Nenhum registro neste filtro.</p>
+              <p className="text-center text-gray-400 text-xs md:text-sm py-8 italic">Nenhum registo neste filtro.</p>
             ) : (
               transacoesExibidas.map((item) => (
                 <div key={item.id} className="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:border-indigo-100 group">
