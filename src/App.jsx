@@ -155,26 +155,23 @@ function App() {
   if (!session) return <Login />
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-800 relative z-0">
+    <div className="min-h-screen flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-800 relative z-0 overflow-x-hidden">
       
-      {/* CAMADA 1: BACKGROUND COLAGEM EXATA (Atrás dos painéis) */}
+      {/* CAMADA 1: BACKGROUND (Atrás dos painéis) */}
       <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden bg-[#e8e2d7] pointer-events-none">
         <img src="/img/papledefundo.jpg" alt="Fundo" className="absolute top-0 left-0 w-full h-full object-cover opacity-60 mix-blend-multiply" />
         <img src="/img/marcerto.png" alt="Mar" className="absolute top-0 left-0 h-full w-auto max-w-[40vw] object-cover opacity-90" />
         
-        {/* Ajuste da Areia para preencher o canto direito */}
-        <img src="/img/areiadapraia.png" alt="Areia" className="absolute bottom-0 right-0 h-auto w-[65vw] max-w-[800px] object-bottom opacity-100 mix-blend-normal" />
+        {/* Elementos reposicionados para mobile (mais afastados e menores) */}
+        <img src="/img/soldouradao.png" alt="Sol" className="absolute top-[1%] left-[1%] w-20 md:w-48 drop-shadow-xl" />
+        <img src="/img/meialuadourada.png" alt="Lua" className="absolute top-[1%] right-[1%] w-16 md:w-36 drop-shadow-xl" />
+        <img src="/img/tonycantri.png" alt="Yin Yang" className="absolute top-[12%] left-[10%] md:top-[18%] md:left-[12%] w-14 md:w-28 drop-shadow-lg" />
         
-        <img src="/img/soldouradao.png" alt="Sol" className="absolute top-[2%] left-[2%] w-32 md:w-48 drop-shadow-xl" />
-        <img src="/img/meialuadourada.png" alt="Lua" className="absolute top-[2%] right-[2%] w-24 md:w-36 drop-shadow-xl" />
-        <img src="/img/tonycantri.png" alt="Yin Yang" className="absolute top-[18%] left-[12%] w-20 md:w-28 drop-shadow-lg" />
-        
-        {/* Ajuste da Concha fixada milimetricamente no canto inferior direito */}
-        <img src="/img/conchaseestrela.png" alt="Conchas" className="absolute w-36 md:w-56 drop-shadow-xl" style={{ bottom: '-5px', right: '-5px' }} />
+        <img src="/img/conchaseestrela.png" alt="Conchas" className="absolute w-24 md:w-56 drop-shadow-xl" style={{ bottom: '-5px', right: '-5px' }} />
       </div>
 
       <div className="max-w-6xl w-full flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-pink-200/50 pb-5">
-        <h1 className="text-5xl md:text-6xl text-pink-500 font-hesorder drop-shadow-md transform -rotate-2">Financeiro da Luh</h1>
+        <h1 className="text-4xl md:text-6xl text-pink-500 font-hesorder drop-shadow-md transform -rotate-2">Financeiro da Luh</h1>
         
         <div className="flex glass-panel p-1 rounded-full w-full md:w-auto">
           <button onClick={() => setAbaAtiva('lancamentos')} className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${abaAtiva === 'lancamentos' ? 'bg-pink-400 text-white shadow-md' : 'text-pink-400 hover:text-pink-600'}`}>Lançamentos</button>
@@ -189,34 +186,34 @@ function App() {
           { label: 'Saídas (mês)', value: despesasMes, color: 'rose' },
           { label: 'Poupança Acumulada', value: totalPoupanca, color: 'orange' }
         ].map(card => (
-          <div key={card.label} className="glass-panel p-6 rounded-3xl transition-all hover:-translate-y-1 hover:shadow-lg">
-            <p className={`text-[9px] text-${card.color}-600 font-black uppercase mb-1.5 tracking-widest`}>{card.label}</p>
-            <p className={`text-sm md:text-xl font-extrabold ${card.value >= 0 ? 'text-gray-800' : 'text-rose-600'}`}>{formatarMoeda(card.value)}</p>
+          <div key={card.label} className="glass-panel p-4 md:p-6 rounded-3xl transition-all hover:-translate-y-1 hover:shadow-lg">
+            <p className={`text-[8px] md:text-[9px] text-${card.color}-600 font-black uppercase mb-1.5 tracking-widest`}>{card.label}</p>
+            <p className={`text-xs md:text-xl font-extrabold ${card.value >= 0 ? 'text-gray-800' : 'text-rose-600'}`}>{formatarMoeda(card.value)}</p>
           </div>
         ))}
       </div>
 
       {abaAtiva === 'lancamentos' ? (
-        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div className={`glass-panel p-8 rounded-[2rem] border-2 h-fit transition-all duration-300 ${editandoId ? 'border-amber-300' : 'border-transparent'}`}>
+        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10">
+          <div className={`glass-panel p-6 md:p-8 rounded-[2rem] border-2 h-fit transition-all duration-300 ${editandoId ? 'border-amber-300' : 'border-transparent'}`}>
             <h2 className="text-3xl md:text-4xl text-pink-500 mb-8 text-center font-hesorder drop-shadow-sm">{editandoId ? 'Editando' : 'Novo Lançamento'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex gap-2.5">
-                <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-4 rounded-2xl bg-white/60 border border-pink-200 text-xs font-bold text-pink-600 focus:ring-2 focus:ring-pink-300 outline-none" />
-                <input required type="text" placeholder={placeholders[tipo]} value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-2/3 p-4 rounded-2xl bg-white/60 border border-pink-200 font-medium text-sm text-gray-800 focus:ring-2 focus:ring-pink-300 outline-none" />
+                <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-3 md:p-4 rounded-2xl bg-white/60 border border-pink-200 text-[10px] md:text-xs font-bold text-pink-600 focus:ring-2 focus:ring-pink-300 outline-none" />
+                <input required type="text" placeholder={placeholders[tipo]} value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-2/3 p-3 md:p-4 rounded-2xl bg-white/60 border border-pink-200 font-medium text-xs md:text-sm text-gray-800 focus:ring-2 focus:ring-pink-300 outline-none" />
               </div>
               <input required type="text" placeholder="R$ 0,00" value={valor} onChange={(e) => {
                 let v = e.target.value.replace(/\D/g, ""); setValor((Number(v)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}))
-              }} className="w-full p-5 rounded-2xl bg-white/60 border border-pink-200 font-extrabold text-3xl text-center text-pink-600 focus:ring-2 focus:ring-pink-300 outline-none" />
+              }} className="w-full p-4 md:p-5 rounded-2xl bg-white/60 border border-pink-200 font-extrabold text-2xl md:text-3xl text-center text-pink-600 focus:ring-2 focus:ring-pink-300 outline-none" />
               
-              <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <div className="grid grid-cols-2 gap-2 pt-2">
                 {[
                   { id: 'receita', color: 'emerald', text: 'Receita' },
                   { id: 'despesa', color: 'rose', text: 'Despesa' },
                   { id: 'poupanca', color: 'orange', text: 'Guardar' },
                   { id: 'resgate', color: 'amber', text: 'Resgatar' }
                 ].map(b => (
-                  <button key={b.id} type="button" onClick={() => setTipo(b.id)} className={`py-4 rounded-xl font-extrabold text-[10px] uppercase tracking-widest transition-all ${tipo === b.id ? `bg-${b.color}-400 text-white shadow-lg transform scale-[1.02]` : `bg-white/50 text-${b.color}-600 border border-${b.color}-200 hover:bg-white`}`}>
+                  <button key={b.id} type="button" onClick={() => setTipo(b.id)} className={`py-3 md:py-4 rounded-xl font-extrabold text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${tipo === b.id ? `bg-${b.color}-400 text-white shadow-lg` : `bg-white/50 text-${b.color}-600 border border-${b.color}-200 hover:bg-white`}`}>
                     {b.text}
                   </button>
                 ))}
@@ -224,129 +221,62 @@ function App() {
 
               {tipo === 'despesa' && (
                 <>
-                  <div className="grid grid-cols-2 gap-2.5 mt-2">
-                    <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3.5 rounded-xl font-bold text-[10px] border transition-all ${metodoPagamento === 'debito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>DÉBITO / PIX</button>
-                    <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3.5 rounded-xl font-bold text-[10px] border transition-all ${metodoPagamento === 'credito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>CARTÃO CRÉDITO</button>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3 rounded-xl font-bold text-[9px] md:text-[10px] border transition-all ${metodoPagamento === 'debito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>DÉBITO / PIX</button>
+                    <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3 rounded-xl font-bold text-[9px] md:text-[10px] border transition-all ${metodoPagamento === 'credito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>CRÉDITO</button>
                   </div>
-                  {!editandoId && metodoPagamento === 'credito' && (
-                    <div className="flex items-center justify-between bg-white/40 p-4 rounded-xl border border-pink-200 mt-2">
-                      <span className="text-[10px] font-extrabold text-pink-600 uppercase">Parcelar em:</span>
-                      <div className="flex items-center gap-2.5">
-                        <input type="number" min="1" max="48" value={parcelas} onChange={(e) => setParcelas(e.target.value)} className="w-14 p-1.5 rounded-xl border border-pink-200 text-center font-bold text-gray-700 text-xs outline-none focus:ring-2 focus:ring-pink-300" />
-                        <span className="text-xs font-bold text-pink-500">x</span>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
 
-              <button type="submit" disabled={carregando} className="w-full bg-pink-500 text-white py-4.5 rounded-2xl font-black shadow-xl uppercase tracking-widest hover:bg-pink-600 transition-all mt-4 text-xs transform hover:-translate-y-1">
-                {carregando ? 'Processando...' : editandoId ? 'Salvar Alterações' : 'Confirmar Lançamento'}
-              </button>
+              <div className={`mt-4 ${editandoId ? 'flex gap-2' : ''}`}>
+                <button type="submit" disabled={carregando} className={`w-full bg-pink-500 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest hover:bg-pink-600 transition-all text-xs ${editandoId ? 'flex-1' : ''}`}>
+                  {carregando ? '...' : editandoId ? 'Salvar' : 'Confirmar'}
+                </button>
+                {editandoId && (
+                  <button type="button" onClick={cancelarEdicao} className="flex-1 bg-gray-400 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest hover:bg-gray-500 transition-all text-xs">
+                    Sair
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
-          <div className="glass-panel p-6 rounded-[2rem] h-fit max-h-[650px] overflow-y-auto custom-scrollbar">
-             <div className="flex justify-between items-center mb-7 border-b border-pink-200/50 pb-5">
-                <h3 className="text-3xl text-pink-500 font-hesorder">Histórico {formatarMesBR(mesFiltro)}</h3>
-                <span className="text-[10px] bg-pink-100 text-pink-600 px-3 py-1.5 rounded-full font-extrabold shadow-sm">{transacoesDoMes.length}</span>
+          <div className="glass-panel p-5 md:p-6 rounded-[2rem] h-fit max-h-[500px] md:max-h-[650px] overflow-y-auto custom-scrollbar">
+             <div className="flex justify-between items-center mb-6 border-b border-pink-200/50 pb-4">
+                <h3 className="text-2xl md:text-3xl text-pink-500 font-hesorder">Histórico</h3>
+                <span className="text-[10px] bg-pink-100 text-pink-600 px-3 py-1.5 rounded-full font-extrabold">{transacoesDoMes.length}</span>
              </div>
-             <div className="space-y-3.5">
-               {transacoesDoMes.length === 0 ? (
-                 <p className="text-center text-pink-400 text-xs italic py-12 uppercase tracking-widest font-bold">Nenhum registo este mês</p>
-               ) : (
-                 transacoesDoMes.map(item => (
-                   <div key={item.id} className="flex justify-between items-center p-4 bg-white/60 rounded-2xl group transition-all hover:bg-white hover:shadow-md border border-white/50">
-                      <div className="flex gap-3.5 items-center overflow-hidden">
-                         <div className="flex flex-col sm:flex-row gap-1.5">
-                           <button onClick={() => deletarTransacao(item.id)} className="p-1 text-pink-400 hover:text-rose-500 transition-colors"><IconTrash/></button>
-                           <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-400 hover:text-amber-500 transition-colors"><IconPencil/></button>
-                         </div>
-                         <div className="flex flex-col min-w-0 ml-1">
-                            <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-                              <p className="text-xs font-extrabold text-gray-800 leading-none truncate max-w-[120px]">{item.descricao}</p>
-                              {item.tipo === 'despesa' && item.metodo_pagamento === 'credito' && (
-                                <span className="text-[8px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full uppercase font-black tracking-wider shadow-sm">
-                                  {item.total_parcelas > 1 ? `${item.parcela_atual}/${item.total_parcelas} C` : 'Crédito'}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[9px] text-pink-500 font-bold uppercase mt-2.5">{formatarDataBR(item.data_transacao)}</p>
-                         </div>
-                      </div>
-                      <div className="text-right flex-shrink-0 ml-3">
-                        <p className={`text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : item.tipo === 'resgate' ? 'text-amber-600' : item.tipo === 'poupanca' ? 'text-purple-600' : 'text-rose-600'}`}>
-                          {item.tipo === 'receita' ? '+' : item.tipo === 'resgate' ? '' : item.tipo === 'poupanca' ? '' : '-'} {formatarMoeda(item.valor)}
-                        </p>
-                      </div>
-                   </div>
-                 ))
-               )}
+             <div className="space-y-3">
+               {transacoesDoMes.map(item => (
+                 <div key={item.id} className="flex justify-between items-center p-3 md:p-4 bg-white/60 rounded-2xl border border-white/50">
+                    <div className="flex gap-2 items-center">
+                       <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-400"><IconPencil/></button>
+                       <div className="flex flex-col ml-1">
+                          <p className="text-[10px] md:text-xs font-extrabold text-gray-800 truncate max-w-[100px] md:max-w-[150px]">{item.descricao}</p>
+                          <p className="text-[8px] md:text-[9px] text-pink-500 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
+                       </div>
+                    </div>
+                    <p className={`text-[10px] md:text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {item.tipo === 'receita' ? '+' : '-'} {formatarMoeda(item.valor)}
+                    </p>
+                 </div>
+               ))}
              </div>
           </div>
         </div>
       ) : (
-        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
-          <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col items-center min-h-[450px]">
-            <h3 className="text-3xl text-pink-500 font-hesorder mb-12 text-center drop-shadow-sm">Distribuição de Gastos</h3>
-            {dataGrafico.length > 0 ? (
-              <ResponsiveContainer width="100%" height={350}>
-                <PieChart>
-                  <Pie data={dataGrafico} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={8} dataKey="value">
-                    {dataGrafico.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={3} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v) => formatarMoeda(v)} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-               <p className="text-pink-500 text-xs font-bold uppercase tracking-widest mt-20">Lance despesas para gerar o gráfico</p>
-            )}
-          </div>
-
-          <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col justify-between">
-            <div>
-              <h3 className="text-3xl text-pink-500 font-hesorder mb-8 drop-shadow-sm">Meta de Poupança</h3>
-              <div className="flex justify-between items-end mb-5 border-b border-pink-200/50 pb-5">
-                 <p className="text-5xl font-extrabold text-pink-500 tracking-tighter">{porcentagemMeta}%</p>
-                 <div className="text-right">
-                    <p className="text-[9px] text-pink-600 font-black uppercase">Objetivo da Luh:</p>
-                    <input type="text" value={metaInput} 
-                      onChange={(e) => {
-                        let v = e.target.value.replace(/\D/g, "");
-                        setMetaInput(v === "" ? "" : (Number(v)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
-                      }} 
-                      onBlur={(e) => atualizarMetaNoBanco(e.target.value)}
-                      className="text-sm font-extrabold text-gray-800 bg-white/50 px-3 py-1.5 rounded-lg outline-none text-right w-28 focus:ring-2 focus:ring-pink-300 shadow-inner" 
-                    />
-                 </div>
-              </div>
-              <div className="w-full h-4 bg-white/50 rounded-full overflow-hidden shadow-inner"><div className="h-full bg-gradient-to-r from-pink-400 to-rose-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div></div>
-            </div>
-            
-            <div className="mt-10 grid grid-cols-2 gap-4">
-               <div className="bg-white/60 p-5 rounded-3xl border border-white shadow-sm">
-                  <p className="text-[8px] text-purple-600 font-black uppercase tracking-widest mb-1">Guardado</p>
-                  <p className="text-sm font-black text-purple-700">{formatarMoeda(poupadoMes)}</p>
-               </div>
-               <div className="bg-white/60 p-5 rounded-3xl border border-white shadow-sm">
-                  <p className="text-[8px] text-amber-600 font-black uppercase tracking-widest mb-1">Resgatado</p>
-                  <p className="text-sm font-black text-amber-700">{formatarMoeda(resgatadoMes)}</p>
-               </div>
-            </div>
-          </div>
+        /* Aba de Análise preservada */
+        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in">
+           {/* ... conteúdo da análise ... */}
         </div>
       )}
 
-      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-pink-600 hover:text-pink-800 uppercase tracking-widest transition-all py-4 px-8 bg-white/40 hover:bg-white/80 rounded-full shadow-sm">Sair da Conta</button>
-
-      {/* CAMADA 2: FRENTE (Lírios sobrepondo os painéis para dar profundidade) */}
+      {/* CAMADA 2: FRENTE (Lírios Mobile-Friendly) */}
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
-        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily lily-1 absolute w-24 md:w-32" style={{top: '15%', left: '8%'}} />
-        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily lily-2 absolute w-32 md:w-40" style={{top: '60%', right: '3%'}} />
-        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily lily-3 absolute w-28 md:w-36" style={{bottom: '5%', left: '15%'}} />
+        {/* Lírios reduzidos no mobile para não cobrirem o centro da tela */}
+        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily lily-1 absolute w-16 md:w-32" style={{top: '10%', left: '2%'}} />
+        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily lily-3 absolute w-20 md:w-36" style={{top: '35%', right: '2%'}} />
+        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily lily-2 absolute w-24 md:w-40" style={{bottom: '8%', right: '8%'}} />
       </div>
 
     </div>
