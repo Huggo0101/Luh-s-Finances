@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
 import { Login } from './Login'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+import { IconFlower, IconPaint, IconSpray, IconTrash, IconPencil, IconX, IconCheck, IconTrashX } from '@tabler/icons-react';
 
 function App() {
   const [session, setSession] = useState(null)
@@ -26,7 +27,7 @@ function App() {
 
   const placeholders = {
     receita: "O que entrou? (ex: Salário...)",
-    despesa: "O que foi pago? (ex: Roupa, Lazer...)",
+    despesa: "O que foi pago? (ex: Spray, Tinta...)",
     poupanca: "O que vai guardar? 🐷",
     resgate: "O que vai retirar? 🔓"
   };
@@ -90,6 +91,12 @@ function App() {
 
   const porcentagemMeta = metaPoupanca > 0 ? Math.min((totalPoupanca / metaPoupanca) * 100, 100).toFixed(1) : 0;
 
+  const dataGrafico = [
+    { name: 'Débito/Pix', value: despesasDebito, color: '#4ADE80' },
+    { name: 'Crédito', value: despesasCredito, color: '#F87171' },
+    { name: 'Guardado', value: poupadoMes, color: '#FB923C' }
+  ].filter(d => d.value > 0);
+
   // --- FUNÇÕES DE EDIÇÃO E EXCLUSÃO ---
   const prepararEdicao = (item) => {
     setEditandoId(item.id);
@@ -146,142 +153,146 @@ function App() {
   const formatarDataBR = (d) => new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
   const formatarMesBR = (m) => { const [y, mon] = m.split('-'); return new Date(y, mon - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase() }
 
+  // Função para renderizar o gráfico como um lírio
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, name, color }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = 25 + innerRadius + (outerRadius - innerRadius);
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  
+    return (
+      <text x={x} y={y} fill={color} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-[10px] font-black uppercase tracking-widest">
+        {name} ({formatarMoeda(value)})
+      </text>
+    );
+  };
+
   if (!session) return <Login />
 
   return (
-    <div className="min-h-screen bg-pink-50/50 flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-700 selection:bg-pink-200">
+    <div className="min-h-screen bg-stone-900/90 flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-stone-300 selection:bg-teal-700/50">
       
       {/* HEADER E NAVEGAÇÃO */}
-      <div className="max-w-6xl w-full flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div className="flex bg-white p-1.5 rounded-3xl shadow-sm border border-pink-100 w-full md:w-auto">
-          <button onClick={() => setAbaAtiva('lancamentos')} className={`flex-1 md:flex-none px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'lancamentos' ? 'bg-pink-400 text-white shadow-md shadow-pink-200' : 'text-pink-300 hover:text-pink-500 hover:bg-pink-50'}`}>🎀 Lançamentos</button>
-          <button onClick={() => setAbaAtiva('analise')} className={`flex-1 md:flex-none px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'analise' ? 'bg-pink-400 text-white shadow-md shadow-pink-200' : 'text-pink-300 hover:text-pink-500 hover:bg-pink-50'}`}>📊 Visão Geral</button>
-        </div>
-        <div className="bg-white px-5 py-2.5 rounded-3xl shadow-sm border border-pink-100 flex items-center gap-3 w-full md:w-auto justify-between">
-          <span className="text-[10px] font-black text-pink-300 uppercase tracking-widest">Mês Referência:</span>
-          <input type="month" value={mesFiltro} onChange={(e) => setMesFiltro(e.target.value)} className="bg-transparent border-none outline-none font-black text-pink-500 cursor-pointer text-sm" />
+      <div className="max-w-6xl w-full flex flex-col md:flex-row justify-between items-center mb-10 gap-5 border-b border-teal-800 pb-5">
+        <h1 className="text-4xl md:text-5xl font-black text-teal-400 tracking-tighter uppercase style-graffiti-main">Financeiro da Luh</h1>
+        
+        <div className="flex bg-stone-900 p-2 rounded-2xl border-2 border-teal-800 shadow-xl shadow-teal-900/20 w-full md:w-auto">
+          <button onClick={() => setAbaAtiva('lancamentos')} className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'lancamentos' ? 'bg-teal-700 text-stone-900 shadow-lg style-graffiti-tab' : 'text-teal-600 hover:text-teal-400'}`}>Lançamentos</button>
+          <button onClick={() => setAbaAtiva('analise')} className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${abaAtiva === 'analise' ? 'bg-teal-700 text-stone-900 shadow-lg style-graffiti-tab' : 'text-teal-600 hover:text-teal-400'}`}>Visão Geral</button>
         </div>
       </div>
 
       {/* CARDS DE RESUMO */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl w-full mb-8">
-        <div className="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-pink-300 hover:shadow-md transition-all">
-          <p className="text-[9px] text-pink-400 font-black uppercase mb-1">Saldo em Conta 💖</p>
-          <p className={`text-sm md:text-xl font-black ${saldoConta >= 0 ? 'text-gray-700' : 'text-rose-500'}`}>{formatarMoeda(saldoConta)}</p>
-        </div>
-        <div className="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-emerald-300 hover:shadow-md transition-all">
-          <p className="text-[9px] text-emerald-400 font-black uppercase mb-1">Entradas (mês) ✨</p>
-          <p className="text-sm md:text-xl font-black text-emerald-500">{formatarMoeda(entradasMes)}</p>
-        </div>
-        <div className="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-rose-300 hover:shadow-md transition-all">
-          <p className="text-[9px] text-rose-400 font-black uppercase mb-1">Saídas (mês) 🛍️</p>
-          <p className="text-sm md:text-xl font-black text-rose-500">{formatarMoeda(despesasMes)}</p>
-        </div>
-        <div className="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-purple-300 hover:shadow-md transition-all">
-          <p className="text-[9px] text-purple-400 font-black uppercase mb-1">Poupança Acumulada 🐷</p>
-          <p className="text-sm md:text-xl font-black text-purple-500">{formatarMoeda(totalPoupanca)}</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl w-full mb-10">
+        {[
+          { label: 'Saldo em Conta', value: saldoConta, color: 'teal' },
+          { label: 'Entradas (mês)', value: entradasMes, color: 'emerald' },
+          { label: 'Saídas (mês)', value: despesasMes, color: 'rose' },
+          { label: 'Poupança Acumulada', value: totalPoupanca, color: 'orange' }
+        ].map(card => (
+          <div key={card.label} className={`bg-stone-900/80 p-6 rounded-3xl border-l-8 border-${card.color}-600/70 hover:border-${card.color}-400/90 transition-all shadow-xl shadow-${card.color}-900/10`}>
+            <p className={`text-[10px] text-${card.color}-400 font-black uppercase mb-1.5 tracking-wider style-graffiti-label`}>{card.label} <IconFlower className="inline size-3" /></p>
+            <p className={`text-sm md:text-xl font-black ${card.value >= 0 ? 'text-stone-100' : 'text-rose-400'} style-graffiti-value`}>{formatarMoeda(card.value)}</p>
+          </div>
+        ))}
       </div>
 
       {abaAtiva === 'lancamentos' ? (
-        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Formulário */}
-          <div className={`bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border-2 h-fit transition-all duration-300 ${editandoId ? 'border-amber-300 shadow-amber-100' : 'border-pink-100'}`}>
-            <h2 className="text-xl md:text-2xl font-black text-pink-500 mb-6 text-center tracking-tighter">{editandoId ? 'A Editar Registo ✏️' : 'Financeiro da Luh 💖🎀'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex gap-2">
-                <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-3 rounded-2xl border border-pink-100 bg-pink-50/30 outline-none text-xs font-bold text-pink-400 focus:ring-2 focus:ring-pink-300 cursor-pointer" />
-                <input required type="text" placeholder={placeholders[tipo]} value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-2/3 p-3 rounded-2xl border border-pink-100 bg-pink-50/30 outline-none font-medium text-sm text-gray-700 focus:ring-2 focus:ring-pink-300 placeholder-pink-300" />
+          <div className={`bg-stone-900/80 p-8 rounded-[3rem] border-2 shadow-2xl ${editandoId ? 'border-amber-600 shadow-amber-900/30' : 'border-teal-800 shadow-teal-900/20'} h-fit`}>
+            <h2 className="text-3xl font-black text-teal-400 mb-8 text-center style-graffiti-form">{editandoId ? 'Editar Registo' : 'Novo Registo'}</h2>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="flex gap-2.5">
+                <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-4 rounded-2xl border border-teal-800 bg-stone-950/40 text-sm font-bold text-teal-500 cursor-pointer focus:border-teal-400" />
+                <input required type="text" placeholder={placeholders[tipo]} value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-2/3 p-4 rounded-2xl border border-teal-800 bg-stone-950/40 font-medium text-sm text-stone-100 placeholder-teal-700 focus:border-teal-400" />
               </div>
               <input required type="text" placeholder="R$ 0,00" value={valor} onChange={(e) => {
                 let v = e.target.value.replace(/\D/g, ""); setValor((Number(v)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}))
-              }} className="w-full p-4 rounded-2xl border border-pink-100 bg-pink-50/30 outline-none font-black text-2xl text-center text-pink-500 focus:ring-2 focus:ring-pink-300 placeholder-pink-200" />
+              }} className="w-full p-5 rounded-2xl border border-teal-800 bg-stone-950/40 font-black text-3xl text-center text-teal-400 placeholder-teal-800 focus:border-teal-400" />
               
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setTipo('receita')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${tipo === 'receita' ? 'bg-emerald-400 text-white shadow-md shadow-emerald-200' : 'bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-400'}`}>Receita</button>
-                <button type="button" onClick={() => setTipo('despesa')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${tipo === 'despesa' ? 'bg-rose-400 text-white shadow-md shadow-rose-200' : 'bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-400'}`}>Despesa</button>
-                <button type="button" onClick={() => setTipo('poupanca')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${tipo === 'poupanca' ? 'bg-purple-400 text-white shadow-md shadow-purple-200' : 'bg-gray-50 text-gray-400 hover:bg-purple-50 hover:text-purple-400'}`}>Guardar</button>
-                <button type="button" onClick={() => setTipo('resgate')} className={`py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${tipo === 'resgate' ? 'bg-amber-400 text-white shadow-md shadow-amber-200' : 'bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-400'}`}>Resgatar</button>
+              <div className="grid grid-cols-2 gap-2.5 pt-2">
+                {[
+                  { id: 'receita', icon: IconPaint, color: 'emerald' },
+                  { id: 'despesa', icon: IconSpray, color: 'rose' },
+                  { id: 'poupanca', icon: IconFlower, color: 'orange' },
+                  { id: 'resgate', icon: IconX, color: 'amber' }
+                ].map(b => (
+                  <button key={b.id} type="button" onClick={() => setTipo(b.id)} className={`py-4 flex items-center justify-center gap-2 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${tipo === b.id ? `bg-${b.color}-600/80 text-stone-950 shadow-lg style-graffiti-btn` : `bg-stone-950 text-${b.color}-500 hover:bg-${b.color}-950 hover:text-${b.color}-300`}`}>
+                    <b.icon className="size-4" />
+                    {b.id}
+                  </button>
+                ))}
               </div>
 
               {tipo === 'despesa' && (
                 <>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3 rounded-xl font-bold text-[9px] border-2 transition-all ${metodoPagamento === 'debito' ? 'border-purple-300 bg-purple-50 text-purple-600' : 'border-transparent bg-gray-50 text-gray-400 hover:bg-purple-50'}`}>DÉBITO / PIX</button>
-                    <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3 rounded-xl font-bold text-[9px] border-2 transition-all ${metodoPagamento === 'credito' ? 'border-pink-300 bg-pink-50 text-pink-600' : 'border-transparent bg-gray-50 text-gray-400 hover:bg-pink-50'}`}>CARTÃO CRÉDITO</button>
+                  <div className="grid grid-cols-2 gap-2.5 mt-2">
+                    <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3.5 rounded-xl font-bold text-[10px] border-2 transition-all uppercase tracking-wider ${metodoPagamento === 'debito' ? 'border-teal-600 bg-teal-950/50 text-teal-300 style-graffiti-method' : 'border-stone-800 bg-stone-950/50 text-stone-500 hover:bg-stone-800'}`}>DÉBITO / PIX</button>
+                    <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3.5 rounded-xl font-bold text-[10px] border-2 transition-all uppercase tracking-wider ${metodoPagamento === 'credito' ? 'border-rose-600 bg-rose-950/50 text-rose-300 style-graffiti-method' : 'border-stone-800 bg-stone-950/50 text-stone-500 hover:bg-stone-800'}`}>CARTÃO CRÉDITO</button>
                   </div>
                   {!editandoId && metodoPagamento === 'credito' && (
-                    <div className="flex items-center justify-between bg-pink-50/50 p-3 rounded-xl border border-pink-100 mt-2 transition-all">
-                      <span className="text-[10px] font-black text-pink-600 uppercase">Parcelar em:</span>
-                      <div className="flex items-center gap-2">
-                        <input type="number" min="1" max="48" value={parcelas} onChange={(e) => setParcelas(e.target.value)} className="w-12 p-1 rounded-lg border border-pink-200 text-center font-bold text-gray-700 text-xs focus:outline-none focus:ring-2 focus:ring-pink-400" />
-                        <span className="text-xs font-bold text-pink-400">x</span>
+                    <div className="flex items-center justify-between bg-stone-950/40 p-3.5 rounded-2xl border border-teal-800 mt-2 transition-all">
+                      <span className="text-[11px] font-black text-teal-500 uppercase tracking-wider">Parcelar em:</span>
+                      <div className="flex items-center gap-2.5">
+                        <input type="number" min="1" max="48" value={parcelas} onChange={(e) => setParcelas(e.target.value)} className="w-14 p-1.5 rounded-xl border border-teal-800 bg-stone-950/40 text-center font-bold text-stone-100 text-xs focus:border-teal-400" />
+                        <span className="text-xs font-bold text-teal-500 style-graffiti-parcel">x</span>
                       </div>
                     </div>
                   )}
                 </>
               )}
 
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2.5 mt-5">
                 {editandoId && (
-                  <button type="button" onClick={cancelarEdicao} className="w-1/3 bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all text-[10px] md:text-xs">Cancelar</button>
+                  <button type="button" onClick={cancelarEdicao} className="w-1/3 bg-stone-950 text-stone-400 py-4.5 rounded-2xl font-black uppercase tracking-widest hover:bg-stone-800 transition-all text-xs">Cancelar</button>
                 )}
-                <button type="submit" disabled={carregando} className={`${editandoId ? 'w-2/3' : 'w-full'} bg-pink-400 text-white py-4 rounded-2xl font-black shadow-md shadow-pink-200 uppercase tracking-widest hover:bg-pink-500 transition-all text-[10px] md:text-xs`}>
-                  {carregando ? 'A Processar... ✨' : editandoId ? 'Salvar Alterações 💖' : 'Confirmar Lançamento 💖'}
+                <button type="submit" disabled={carregando} className={`${editandoId ? 'w-2/3' : 'w-full'} bg-teal-700 text-stone-950 py-4.5 rounded-2xl font-black shadow-lg shadow-teal-950/30 uppercase tracking-widest hover:bg-teal-600 transition-all text-xs style-graffiti-confirm`}>
+                  {carregando ? 'A Processar...' : editandoId ? 'Salvar' : 'Confirmar'}
                 </button>
               </div>
             </form>
           </div>
 
-          {/* Histórico Restituído */}
-          <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-pink-100 h-fit max-h-[600px] overflow-y-auto custom-scrollbar">
-             <div className="flex justify-between items-center mb-6 border-b border-pink-50 pb-4">
-                <h3 className="font-black text-pink-500 uppercase text-xs tracking-tighter">Histórico 🎀 {formatarMesBR(mesFiltro)}</h3>
-                <span className="text-[10px] bg-pink-50 text-pink-400 px-3 py-1 rounded-full font-black">{transacoesDoMes.length}</span>
+          {/* Histórico */}
+          <div className="bg-stone-900/80 p-8 rounded-[3rem] border-2 border-teal-800 shadow-2xl shadow-teal-900/10 h-fit max-h-[650px] overflow-y-auto style-graffiti-history">
+             <div className="flex justify-between items-center mb-7 border-b border-teal-800 pb-5">
+                <h3 className="font-black text-teal-500 uppercase text-sm tracking-widest style-graffiti-history-title">Histórico de {formatarMesBR(mesFiltro)}</h3>
+                <span className="text-[10px] bg-teal-950 text-teal-300 px-3 py-1.5 rounded-full font-black style-graffiti-history-count">{transacoesDoMes.length}</span>
              </div>
-             <div className="space-y-3">
+             <div className="space-y-4">
                {transacoesDoMes.length === 0 ? (
-                 <p className="text-center text-pink-300 text-xs italic py-10 uppercase tracking-widest font-bold">Nenhum registo este mês 💕</p>
+                 <p className="text-center text-teal-700 text-xs italic py-12 uppercase tracking-widest font-bold style-graffiti-history-empty">Nada para ver aqui...</p>
                ) : (
                  transacoesDoMes.map(item => (
-                   <div key={item.id} className="flex justify-between items-center p-3 md:p-4 bg-[#FFF0F5] rounded-2xl group transition-all hover:bg-white hover:shadow-md border border-transparent hover:border-pink-200">
-                      
-                      <div className="flex gap-3 items-center overflow-hidden">
-                         <div className="flex flex-col sm:flex-row gap-1">
-                           <button onClick={() => deletarTransacao(item.id)} className="p-1 text-pink-200 hover:text-rose-500 transition-colors flex-shrink-0" title="Excluir">
-                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                           </button>
-                           <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-200 hover:text-amber-400 transition-colors flex-shrink-0" title="Editar">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                           </button>
+                   <div key={item.id} className="flex justify-between items-center p-4 bg-stone-950/40 rounded-2xl transition-all hover:bg-stone-800 hover:shadow-xl border border-transparent hover:border-teal-800 style-graffiti-history-item">
+                      <div className="flex gap-3.5 items-center overflow-hidden">
+                         <div className="flex flex-col sm:flex-row gap-1.5">
+                           <button onClick={() => deletarTransacao(item.id)} className="p-1.5 text-stone-600 hover:text-rose-400 transition-colors"><IconTrashX className="size-4" /></button>
+                           <button onClick={() => prepararEdicao(item)} className="p-1.5 text-stone-600 hover:text-amber-400 transition-colors"><IconPencil className="size-4" /></button>
                          </div>
-
                          <div className="flex flex-col min-w-0 ml-1">
-                            <div className="flex flex-wrap items-center gap-1 md:gap-2">
-                              <p className="text-xs font-black text-gray-700 leading-none truncate max-w-[100px] sm:max-w-[160px]">{item.descricao}</p>
-                              
-                              {/* TAGS */}
+                            <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                              <p className="text-xs font-black text-stone-100 leading-none truncate max-w-[120px] style-graffiti-history-desc">{item.descricao}</p>
                               {item.tipo === 'despesa' && item.metodo_pagamento === 'credito' && (
-                                <span className="text-[8px] bg-pink-100 text-pink-500 px-2 py-0.5 rounded-full uppercase font-black tracking-wider border border-pink-200 whitespace-nowrap">
+                                <span className="text-[8px] bg-rose-950 text-rose-300 px-2 py-0.5 rounded-full uppercase font-black tracking-wider border border-rose-800 style-graffiti-history-tag">
                                   {item.total_parcelas > 1 ? `${item.parcela_atual}/${item.total_parcelas} Crédito` : 'Crédito'}
                                 </span>
                               )}
                               {item.tipo === 'despesa' && item.metodo_pagamento === 'debito' && (
-                                <span className="text-[8px] bg-purple-100 text-purple-500 px-2 py-0.5 rounded-full uppercase font-black tracking-wider border border-purple-200 whitespace-nowrap">
+                                <span className="text-[8px] bg-teal-950 text-teal-300 px-2 py-0.5 rounded-full uppercase font-black tracking-wider border border-teal-800 style-graffiti-history-tag">
                                   Débito/Pix
                                </span>
                               )}
                             </div>
-                            <p className="text-[9px] text-pink-400 font-bold uppercase mt-1.5">{formatarDataBR(item.data_transacao)}</p>
+                            <p className="text-[9px] text-teal-600 font-bold uppercase mt-2.5 style-graffiti-history-date">{formatarDataBR(item.data_transacao)}</p>
                          </div>
                       </div>
-
-                      <div className="text-right flex-shrink-0 ml-2">
-                        <p className={`text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-500' : item.tipo === 'resgate' ? 'text-amber-500' : item.tipo === 'poupanca' ? 'text-purple-500' : 'text-rose-500'}`}>
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <p className={`text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-400' : item.tipo === 'resgate' ? 'text-amber-400' : item.tipo === 'poupanca' ? 'text-orange-400' : 'text-rose-400'} style-graffiti-history-value`}>
                           {item.tipo === 'receita' ? '+' : item.tipo === 'resgate' ? '🔓' : item.tipo === 'poupanca' ? '🐷' : '-'} {formatarMoeda(item.valor)}
                         </p>
                       </div>
-
                    </div>
                  ))
                )}
@@ -289,60 +300,76 @@ function App() {
           </div>
         </div>
       ) : (
-        /* ABA DE VISÃO GERAL */
-        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-500">
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-pink-100 flex flex-col items-center min-h-[400px]">
-            <h3 className="font-black text-pink-400 uppercase text-[10px] tracking-[0.3em] mb-10 text-center">Distribuição de Gastos 🎀</h3>
-            {([despesasDebito, despesasCredito, poupadoMes].some(v => v > 0)) ? (
-              <ResponsiveContainer width="100%" height={300}>
+        /* VISÃO GERAL */
+        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
+          <div className="bg-stone-900/80 p-8 md:p-10 rounded-[3rem] border-2 border-teal-800 shadow-2xl shadow-teal-900/10 flex flex-col items-center min-h-[450px]">
+            <h3 className="font-black text-teal-500 uppercase text-xs tracking-[0.4em] mb-12 text-center style-graffiti-analise-title">O Lírio dos Teus Gastos ⚜️</h3>
+            {dataGrafico.length > 0 ? (
+              <ResponsiveContainer width="100%" height={350}>
                 <PieChart>
-                  <Pie data={[ { name: 'Débito/Pix', value: despesasDebito, color: '#c084fc' }, { name: 'Crédito', value: despesasCredito, color: '#f472b6' }, { name: 'Guardado', value: poupadoMes, color: '#38bdf8' } ].filter(d => d.value > 0)} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={8} dataKey="value">
-                    {([ { name: 'Débito/Pix', value: despesasDebito, color: '#c084fc' }, { name: 'Crédito', value: despesasCredito, color: '#f472b6' }, { name: 'Guardado', value: poupadoMes, color: '#38bdf8' } ].filter(d => d.value > 0)).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Pie
+                    data={dataGrafico}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={10}
+                    dataKey="value"
+                    label={renderCustomizedLabel}
+                    labelLine={true}
+                  >
+                    {dataGrafico.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#1C1917" strokeWidth={3} />
                     ))}
+                    {/* Elementos centrais para formar o miolo do lírio */}
+                    <circle cx="50%" cy="50%" r="65" fill="#FB923C" fillOpacity={0.15} stroke="#FB923C" strokeWidth={1} strokeDasharray="5 5" />
+                    <circle cx="50%" cy="50%" r="55" fill="#FACC15" fillOpacity={0.8} />
+                    <circle cx="50%" cy="50%" r="10" fill="#CA8A04" />
+                    <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-4xl font-black text-stone-950 style-graffiti-flower-center">⚜️</text>
                   </Pie>
                   <Tooltip formatter={(v) => formatarMoeda(v)} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: '#52525B' }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-10">
-                 <div className="w-20 h-20 bg-pink-50 rounded-full flex items-center justify-center mb-4"><span className="text-3xl">💕</span></div>
-                 <p className="text-pink-300 text-xs font-bold uppercase tracking-widest leading-relaxed">Lance despesas para <br/> gerar o gráfico fofinho</p>
+              <div className="flex flex-col items-center justify-center h-full text-center p-12">
+                 <div className="w-24 h-24 bg-stone-950 rounded-full flex items-center justify-center mb-6 border-2 border-teal-800"><IconFlower className="size-10 text-teal-800" strokeWidth={1.5}/></div>
+                 <p className="text-teal-700 text-xs font-bold uppercase tracking-widest style-graffiti-analise-empty">Pinta alguns gastos para florescer o gráfico...</p>
               </div>
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-pink-100 flex flex-col justify-between">
+          <div className="bg-stone-900/80 p-8 md:p-10 rounded-[3rem] border-2 border-teal-800 shadow-2xl shadow-teal-900/10 flex flex-col justify-between">
             <div>
-              <h3 className="font-black text-gray-700 uppercase text-xs mb-6 tracking-[0.2em]">Meta de Poupança 🐷💖</h3>
-              <div className="flex justify-between items-end mb-4">
-                 <p className="text-4xl font-black text-pink-500 tracking-tighter">{porcentagemMeta}%</p>
+              <h3 className="font-black text-teal-500 uppercase text-xs mb-8 tracking-[0.3em] style-graffiti-meta-title">Nossa Meta Permanente ⚜️🐷</h3>
+              <div className="flex justify-between items-end mb-5">
+                 <p className="text-5xl font-black text-teal-400 tracking-tighter style-graffiti-meta-per">{porcentagemMeta}%</p>
                  <div className="text-right">
-                    <p className="text-[8px] text-pink-400 font-black uppercase">Objetivo da Luh:</p>
+                    <p className="text-[9px] text-teal-600 font-black uppercase">O Alvo da Luh:</p>
                     <input type="text" value={metaInput} 
                       onChange={(e) => {
                         let v = e.target.value.replace(/\D/g, "");
                         setMetaInput(v === "" ? "" : (Number(v)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
                       }} 
                       onBlur={(e) => atualizarMetaNoBanco(e.target.value)}
-                      className="text-sm font-black text-gray-700 bg-pink-50 px-2 py-1 rounded-lg border-none outline-none text-right w-28 focus:ring-2 focus:ring-pink-300" 
+                      className="text-sm font-black text-stone-100 bg-stone-950 px-3 py-1.5 rounded-xl border-none outline-none text-right w-32 focus:ring-2 focus:ring-teal-500 style-graffiti-meta-input" 
                     />
+                    <p className="text-[8px] text-stone-500 italic mt-1.5 style-graffiti-meta-save">Salvo automático.</p>
                  </div>
               </div>
-              <div className="w-full h-4 bg-pink-50 rounded-full overflow-hidden shadow-inner">
-                 <div className="h-full bg-gradient-to-r from-pink-300 via-rose-300 to-pink-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div>
+              <div className="w-full h-5 bg-stone-950 rounded-full overflow-hidden shadow-inner border border-teal-900">
+                 <div className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-orange-400 transition-all duration-1000 style-graffiti-meta-bar" style={{ width: `${porcentagemMeta}%` }}></div>
               </div>
             </div>
             
-            <div className="mt-10 grid grid-cols-2 gap-4">
-               <div className="bg-purple-50 p-5 rounded-3xl border border-purple-100 shadow-sm">
-                  <p className="text-[8px] text-purple-400 font-black uppercase tracking-widest mb-1">Guardado 🐷</p>
-                  <p className="text-sm font-black text-purple-500">{formatarMoeda(poupadoMes)}</p>
+            <div className="mt-10 grid grid-cols-2 gap-5">
+               <div className="bg-emerald-950 p-6 rounded-3xl border border-emerald-800 shadow-xl shadow-emerald-950/20 style-graffiti-meta-box">
+                  <p className="text-[9px] text-emerald-300 font-black uppercase tracking-widest mb-1.5">Guardado <IconFlower className="inline size-3"/></p>
+                  <p className="text-sm font-black text-emerald-100 style-graffiti-meta-value">{formatarMoeda(poupadoMes)}</p>
                </div>
-               <div className="bg-amber-50 p-5 rounded-3xl border border-amber-100 shadow-sm">
-                  <p className="text-[8px] text-amber-500 font-black uppercase tracking-widest mb-1">Resgatado 🔓</p>
-                  <p className="text-sm font-black text-amber-600">{formatarMoeda(resgatadoMes)}</p>
+               <div className="bg-amber-950 p-6 rounded-3xl border border-amber-800 shadow-xl shadow-amber-950/20 style-graffiti-meta-box">
+                  <p className="text-[9px] text-amber-300 font-black uppercase tracking-widest mb-1.5">Resgatado 🔓</p>
+                  <p className="text-sm font-black text-amber-100 style-graffiti-meta-value">{formatarMoeda(resgatadoMes)}</p>
                </div>
             </div>
           </div>
@@ -350,7 +377,7 @@ function App() {
       )}
 
       {/* FOOTER */}
-      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-pink-300 hover:text-pink-500 hover:bg-white uppercase tracking-[0.5em] transition-all py-4 px-8 border border-transparent hover:border-pink-200 rounded-full">Sair da Conta</button>
+      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[10px] font-black text-stone-600 hover:text-teal-400 uppercase tracking-[0.6em] transition-all py-5 px-10 border border-transparent hover:border-teal-900 rounded-full style-graffiti-exit">Sair</button>
     </div>
   )
 }
