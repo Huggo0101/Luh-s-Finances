@@ -1,123 +1,87 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabaseClient'
-import { IconFlower, IconSpray, IconUserPlus, IconLogin } from '@tabler/icons-react'
 
 export function Login() {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  // Estado para alternar entre Login e Cadastro
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
 
   const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
-
-    // Se estiver no modo de Cadastro
-    if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-      if (error) {
-        alert("Erro ao criar conta: " + error.message)
+    try {
+      if (isRegistering) {
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) throw error
+        alert('Registro feito! Pode fazer login agora.')
+        setIsRegistering(false)
       } else {
-        alert("Conta criada com sucesso! Você já pode acessar.")
-        setIsSignUp(false) // Volta para a tela de login
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
       }
-    } 
-    // Se estiver no modo de Login
-    else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) {
-        alert("Erro ao entrar: " + error.message)
-      }
+    } catch (error) {
+      alert(error.error_description || error.message)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
-    <div className="min-h-screen bg-stone-900/90 flex flex-col items-center justify-center p-4 font-sans selection:bg-teal-700/50">
+    <div className="min-h-screen flex items-center justify-center p-4 relative z-0">
       
-      {/* TÍTULO PRINCIPAL (FORA DA CAIXA) */}
-      <div className="mb-10 text-center animate-in fade-in duration-700">
-        <h1 className="text-5xl md:text-6xl font-black text-teal-400 tracking-tighter uppercase style-graffiti-main mb-3">
-          Financeiro da Luh
-        </h1>
-        <p className="text-teal-600 font-black uppercase tracking-[0.4em] text-xs flex items-center justify-center gap-2">
-          <IconFlower className="size-4" /> Arte Financeira <IconSpray className="size-4" />
-        </p>
+      {/* BACKGROUND COLAGEM EXATA PARA O LOGIN TAMBÉM */}
+      <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden bg-[#e8e2d7]">
+        <img src="/img/papledefundo.jpg" alt="Fundo" className="absolute top-0 left-0 w-full h-full object-cover opacity-60 mix-blend-multiply" />
+        <img src="/img/marcerto.png" alt="Mar" className="absolute top-0 left-0 h-full w-auto max-w-[40vw] object-cover opacity-90" />
+        <img src="/img/areiadapraia.png" alt="Areia" className="absolute bottom-0 right-0 h-auto w-[50vw] max-w-[600px] opacity-90" />
+        <img src="/img/soldouradao.png" alt="Sol" className="absolute top-[5%] left-[5%] w-32 md:w-48 drop-shadow-xl" />
+        <img src="/img/meialuadourada.png" alt="Lua" className="absolute top-[5%] right-[5%] w-24 md:w-36 drop-shadow-xl" />
+        <img src="/img/tonycantri.png" alt="Yin Yang" className="absolute top-[20%] left-[15%] w-20 md:w-28 drop-shadow-lg" />
+        <img src="/img/conchaseestrela.png" alt="Conchas" className="absolute bottom-[5%] right-[5%] w-32 md:w-48 drop-shadow-lg" />
+        
+        {/* LÍRIOS REAIS FLUTUANTES NO LOGIN */}
+        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily lily-1 absolute w-24 md:w-32" style={{top: '25%', left: '35%'}} />
+        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily lily-2 absolute w-32 md:w-40" style={{top: '55%', right: '25%'}} />
+        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily lily-3 absolute w-28 md:w-36" style={{bottom: '20%', left: '20%'}} />
       </div>
 
-      {/* CAIXA DE LOGIN/REGISTO COM MUDANÇA VISUAL NOTÁVEL */}
-      <div className={`p-8 md:p-10 rounded-[3rem] border-2 shadow-2xl max-w-sm w-full transition-all duration-500 transform ${isSignUp ? 'bg-stone-900/95 border-rose-600 shadow-rose-900/30 scale-[1.02]' : 'bg-stone-950/80 border-teal-800 shadow-teal-900/30'}`}>
+      <div className="glass-panel p-10 md:p-14 rounded-[3rem] shadow-2xl w-full max-w-md border-2 border-white/60 relative overflow-hidden">
+        <h1 className="text-5xl text-pink-500 font-hesorder text-center mb-2 drop-shadow-sm transform -rotate-2">Olá, Luh!</h1>
+        <p className="text-[10px] text-pink-600 font-black uppercase tracking-[0.2em] text-center mb-8">O seu cofre pessoal</p>
         
-        <div className="text-center mb-8 flex flex-col items-center transition-colors duration-500">
-          {isSignUp ? <IconUserPlus className="size-12 text-rose-500 mb-3" strokeWidth={1.5} /> : <IconLogin className="size-12 text-teal-500 mb-3" strokeWidth={1.5} />}
-          <h2 className={`text-3xl font-black uppercase tracking-widest style-graffiti-form transition-colors duration-500 ${isSignUp ? 'text-rose-400' : 'text-teal-400'}`}>
-            {isSignUp ? 'Nova Tag' : 'Acesso'}
-          </h2>
-          <p className="text-[10px] text-stone-400 mt-2 font-black uppercase tracking-widest style-graffiti-label">
-            {isSignUp ? 'Junta-te para gerir as finanças' : 'Aceda ao financeiro da Luh'}
-          </p>
-        </div>
-
         <form onSubmit={handleAuth} className="space-y-5">
           <div>
-            <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 style-graffiti-label transition-colors duration-500 ${isSignUp ? 'text-rose-500' : 'text-teal-600'}`}>
-              E-mail
-            </label>
             <input
-              required
               type="email"
-              placeholder="seu@email.com"
+              placeholder="O seu E-mail"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`w-full p-4 rounded-2xl border bg-stone-950/60 font-bold text-sm text-stone-100 outline-none transition-all duration-500 ${isSignUp ? 'border-rose-900 focus:border-rose-500 placeholder-rose-900/50' : 'border-teal-900 focus:border-teal-500 placeholder-teal-900/50'}`}
-            />
-          </div>
-
-          <div>
-            <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 style-graffiti-label transition-colors duration-500 ${isSignUp ? 'text-rose-500' : 'text-teal-600'}`}>
-              Senha
-            </label>
-            <input
               required
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`w-full p-4 rounded-2xl border bg-stone-950/60 font-bold text-sm text-stone-100 outline-none transition-all duration-500 ${isSignUp ? 'border-rose-900 focus:border-rose-500 placeholder-rose-900/50' : 'border-teal-900 focus:border-teal-500 placeholder-teal-900/50'}`}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-4 rounded-2xl bg-white/60 border border-pink-200 text-sm font-bold text-gray-800 placeholder-pink-400 outline-none focus:ring-2 focus:ring-pink-300"
             />
-            {isSignUp && (
-              <p className="text-[9px] text-rose-400/70 mt-2 font-bold uppercase tracking-widest transition-opacity duration-500">Mínimo de 6 caracteres.</p>
-            )}
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-5 rounded-2xl font-black shadow-lg uppercase tracking-widest transition-all duration-500 text-xs style-graffiti-confirm mt-4 border ${isSignUp ? 'bg-rose-700 text-stone-950 border-rose-500 shadow-rose-900/30 hover:bg-rose-600' : 'bg-teal-700 text-stone-950 border-teal-500 shadow-teal-900/30 hover:bg-teal-600'} disabled:opacity-50`}
-          >
-            {loading ? 'A processar...' : isSignUp ? 'Cadastrar 🎨' : 'Entrar ⚜️'}
+          <div>
+            <input
+              type="password"
+              placeholder="A sua Senha"
+              value={password}
+              required
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-4 rounded-2xl bg-white/60 border border-pink-200 text-sm font-bold text-gray-800 placeholder-pink-400 outline-none focus:ring-2 focus:ring-pink-300"
+            />
+          </div>
+          <button disabled={loading} className="w-full bg-pink-500 hover:bg-pink-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-lg transition-all transform hover:-translate-y-1">
+            {loading ? 'Processando...' : isRegistering ? 'Criar Conta' : 'Entrar no Sistema'}
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-stone-800 text-center">
-          <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${isSignUp ? 'text-stone-500 hover:text-teal-400' : 'text-stone-500 hover:text-rose-400'}`}
-          >
-            {isSignUp 
-              ? 'Já tem uma conta? Entre aqui' 
-              : 'Não tem conta? Crie uma agora'}
+        <p className="mt-8 text-center text-xs font-bold text-pink-600">
+          {isRegistering ? 'Já tem a sua chave?' : 'Ainda não tem acesso?'}
+          <button onClick={() => setIsRegistering(!isRegistering)} className="ml-2 text-pink-800 underline decoration-pink-300 decoration-2 underline-offset-4 hover:text-pink-500 transition-colors">
+            {isRegistering ? 'Faça Login' : 'Registe-se'}
           </button>
-        </div>
+        </p>
       </div>
     </div>
   )

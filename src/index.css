@@ -1,67 +1,42 @@
 @import "tailwindcss";
 
-/* Importando a fonte sofisticada e expressiva (Estilo Lettering/Colagem) */
-@import url('[https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap](https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap)');
-
-/* -----------------------------------------------------------
-   ESTILOS DOS LÍRIOS FLUTUANTES (Background Colagem)
------------------------------------------------------------ */
-.lily-background-collage {
-  position: fixed;
-  top: 0; 
-  left: 0;
-  width: 100%; 
-  height: 100%;
-  pointer-events: none; /* Garante que os lírios não atrapalhem os cliques */
-  z-index: -1; /* Fica atrás de tudo */
-  overflow: hidden;
+/* 1. IMPORTAÇÃO DA FONTE LOCAL (Pasta Public) */
+@font-face {
+  font-family: 'Hesorder';
+  src: url('/fonts/Hesorder.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
 
+/* Classe utilitária para aplicar a fonte de grafite/lettering */
+.font-hesorder {
+  font-family: 'Hesorder', sans-serif;
+  letter-spacing: 2px;
+}
+
+/* 2. ANIMAÇÃO DOS LÍRIOS REAIS FLUTUANTES */
 .floating-lily {
-  position: absolute;
-  color: #FFF2A8; /* Amarelo Pálido/Dourado */
-  font-size: 2rem;
-  opacity: 0.15;
-  filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.1));
-  animation: floatLily 15s ease-in-out infinite;
-  transform-origin: center;
+  animation: floatLily 12s ease-in-out infinite;
+  filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.3)); /* Sombra para dar profundidade */
+  z-index: -1; /* Fica atrás dos painéis do site */
 }
 
-/* A Mágica que faz os lírios flutuarem pela tela */
+/* Tempos diferentes para cada lírio não flutuar igual ao outro */
+.lily-1 { animation-delay: 0s; }
+.lily-2 { animation-delay: 3.5s; }
+.lily-3 { animation-delay: 7s; }
+
 @keyframes floatLily {
   0% { transform: translateY(0) rotate(0deg) scale(1); }
-  33% { transform: translateY(-20px) rotate(10deg) scale(1.1); }
-  66% { transform: translateY(15px) rotate(-10deg) scale(0.9); }
+  33% { transform: translateY(-15px) rotate(8deg) scale(1.05); }
+  66% { transform: translateY(12px) rotate(-6deg) scale(0.95); }
   100% { transform: translateY(0) rotate(0deg) scale(1); }
 }
 
-/* -----------------------------------------------------------
-   ESTILOS DA TIPOGRAFIA E ELEMENTOS (Estilo Luh)
------------------------------------------------------------ */
-.style-feminine-expressive {
-  font-family: 'Permanent Marker', cursive;
-  text-transform: uppercase;
-  text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-}
-
-.style-feminine-main {
-  font-size: 3.5rem;
-  letter-spacing: -2px;
-  color: #F472B6; 
-  transform: rotate(-3deg);
-  margin-left: -1rem;
-}
-
-.style-feminine-label, 
-.style-feminine-meta-title, 
-.style-feminine-analise-title {
-  letter-spacing: 0.15em;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.style-feminine-btn {
-  transform: rotate(2deg);
-  border: 1px solid #FFAB91; 
-  box-shadow: inset 0px 0px 5px rgba(255,171,145,0.4);
+/* 3. PAINÉIS DE VIDRO (Para o texto ser legível sobre as imagens) */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
 }
