@@ -134,7 +134,13 @@ function App() {
     const [ano, mes, dia] = dataLancamento.split('-');
     
     if (editandoId) {
-      await supabase.from('transacoes').update({ descricao, valor: valorNum, tipo, metodo_pagamento: tipo === 'despesa' ? metodoPagamento : null, data_transacao: new Date(ano, mes-1, dia, 12).toISOString() }).eq('id', editandoId)
+      await supabase.from('transacoes').update({ 
+        descricao, 
+        valor: valorNum, 
+        tipo, 
+        metodo_pagamento: tipo === 'despesa' ? metodoPagamento : null, 
+        data_transacao: new Date(ano, mes-1, dia, 12).toISOString() 
+      }).eq('id', editandoId)
       cancelarEdicao(); carregarDadosIniciais();
     } else {
       const numP = (tipo === 'despesa' && metodoPagamento === 'credito' && parcelas) ? Number(parcelas) : 1;
@@ -142,7 +148,16 @@ function App() {
       for (let i = 0; i < numP; i++) {
         let d = new Date(ano, mes-1 + i, 1, 12); 
         d.setDate(Math.min(dia, new Date(ano, mes-1 + i + 1, 0).getDate()));
-        insercoes.push({ descricao, valor: vP, tipo, metodo_pagamento: tipo === 'despesa' ? metodoPagamento : null, parcela_atual: i + 1, total_parcelas: numP, data_transacao: d.toISOString(), user_id: session.user.id });
+        insercoes.push({ 
+          descricao, 
+          valor: vP, 
+          tipo, 
+          metodo_pagamento: tipo === 'despesa' ? metodoPagamento : null, 
+          parcela_atual: i + 1, 
+          total_parcelas: numP, 
+          data_transacao: d.toISOString(), 
+          user_id: session.user.id 
+        });
       }
       await supabase.from('transacoes').insert(insercoes); setDescricao(''); setValor(''); setParcelas(1); carregarDadosIniciais();
     }
@@ -209,17 +224,40 @@ function App() {
               }} className="w-full p-4 md:p-5 rounded-2xl bg-white/60 border border-pink-200 font-extrabold text-2xl md:text-3xl text-center text-pink-600 outline-none" />
               
               <div className="grid grid-cols-2 gap-2 pt-2">
-                {['receita', 'despesa', 'poupanca', 'resgate'].map(id => (
-                  <button key={id} type="button" onClick={() => setTipo(id)} className={`py-3 md:py-4 rounded-xl font-extrabold text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${tipo === id ? `bg-pink-400 text-white shadow-lg` : `bg-white/50 text-pink-600 border border-pink-200 hover:bg-white`}`}>{id}</button>
+                {[
+                  { id: 'receita', color: 'emerald', text: 'RECEITA' },
+                  { id: 'despesa', color: 'rose', text: 'DESPESA' },
+                  { id: 'poupanca', color: 'orange', text: 'GUARDAR' },
+                  { id: 'resgate', color: 'amber', text: 'RESGATAR' }
+                ].map(b => (
+                  <button key={b.id} type="button" onClick={() => setTipo(b.id)} className={`py-3 md:py-4 rounded-xl font-extrabold text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${tipo === b.id ? `bg-${b.color}-400 text-white shadow-lg` : `bg-white/50 text-${b.color}-600 border border-${b.color}-200 hover:bg-white`}`}>
+                    {b.text}
+                  </button>
                 ))}
               </div>
 
+              {/* RESTAURAÇÃO DAS FUNÇÕES DE DÉBITO E CRÉDITO */}
+              {tipo === 'despesa' && (
+                <div className="space-y-4 mt-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3 rounded-xl font-bold text-[9px] md:text-[10px] border transition-all ${metodoPagamento === 'debito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>DÉBITO / PIX</button>
+                    <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3 rounded-xl font-bold text-[9px] md:text-[10px] border transition-all ${metodoPagamento === 'credito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>CARTÃO CRÉDITO</button>
+                  </div>
+                  {!editandoId && metodoPagamento === 'credito' && (
+                    <div className="flex items-center justify-between bg-white/40 p-4 rounded-xl border border-pink-200">
+                      <span className="text-[10px] font-extrabold text-pink-600 uppercase">Parcelas:</span>
+                      <input type="number" min="1" max="48" value={parcelas} onChange={(e) => setParcelas(e.target.value)} className="w-14 p-1.5 rounded-xl border border-pink-200 text-center font-bold text-gray-700 text-xs outline-none focus:ring-2 focus:ring-pink-300" />
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className={`mt-4 ${editandoId ? 'flex gap-2' : ''}`}>
-                <button type="submit" disabled={carregando} className="w-full bg-pink-500 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest text-xs flex-1">
+                <button type="submit" disabled={carregando} className={`w-full bg-pink-500 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest text-xs flex-1 transform hover:-translate-y-1 transition-all`}>
                   {carregando ? '...' : editandoId ? 'Salvar' : 'Confirmar'}
                 </button>
                 {editandoId && (
-                  <button type="button" onClick={cancelarEdicao} className="flex-1 bg-gray-400 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest text-xs">
+                  <button type="button" onClick={cancelarEdicao} className="flex-1 bg-gray-400 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest text-xs transform hover:-translate-y-1 transition-all">
                     Cancelar
                   </button>
                 )}
@@ -234,12 +272,17 @@ function App() {
              </div>
              <div className="space-y-3">
                {transacoesDoMes.map(item => (
-                 <div key={item.id} className="flex justify-between items-center p-3 md:p-4 bg-white/60 rounded-2xl border border-white/50">
+                 <div key={item.id} className="flex justify-between items-center p-3 md:p-4 bg-white/60 rounded-2xl border border-white/50 group">
                     <div className="flex gap-2 items-center">
                        <button onClick={() => deletarTransacao(item.id)} className="p-1 text-pink-400 hover:text-rose-600"><IconTrash/></button>
                        <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-400 hover:text-amber-500"><IconPencil/></button>
                        <div className="flex flex-col ml-1">
-                          <p className="text-[10px] md:text-xs font-extrabold text-gray-800">{item.descricao}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-[10px] md:text-xs font-extrabold text-gray-800">{item.descricao}</p>
+                            {item.tipo === 'despesa' && item.metodo_pagamento === 'credito' && (
+                              <span className="text-[7px] bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded font-black uppercase">{item.parcela_atual}/{item.total_parcelas} C</span>
+                            )}
+                          </div>
                           <p className="text-[8px] md:text-[9px] text-pink-500 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
                        </div>
                     </div>
@@ -276,7 +319,7 @@ function App() {
                         <input type="text" value={metaInput} onChange={(e) => {
                           let v = e.target.value.replace(/\D/g, "");
                           setMetaInput(v === "" ? "" : (Number(v)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
-                        }} onBlur={(e) => atualizarMetaNoBanco(e.target.value)} className="text-sm font-bold bg-white/50 px-3 py-1.5 rounded-lg w-32 text-right outline-none border border-pink-100 focus:ring-2 focus:ring-pink-300" />
+                        }} onBlur={(e) => atualizarMetaNoBanco(e.target.value)} className="text-sm font-bold bg-white/50 px-3 py-1.5 rounded-lg w-32 text-right outline-none border border-pink-100 focus:ring-2 focus:ring-pink-300 shadow-inner" />
                     </div>
                 </div>
                 <div className="w-full h-4 bg-white/50 rounded-full overflow-hidden shadow-inner">
