@@ -8,7 +8,6 @@
   font-style: normal;
 }
 
-/* Classe utilitária para aplicar a fonte de grafite/lettering */
 .font-hesorder {
   font-family: 'Hesorder', sans-serif;
   letter-spacing: 2px;
@@ -17,11 +16,9 @@
 /* 2. ANIMAÇÃO DOS LÍRIOS REAIS FLUTUANTES */
 .floating-lily {
   animation: floatLily 12s ease-in-out infinite;
-  filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.3)); /* Sombra para dar profundidade */
-  z-index: -1; /* Fica atrás dos painéis do site */
+  filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.3)); 
 }
 
-/* Tempos diferentes para cada lírio não flutuar igual ao outro */
 .lily-1 { animation-delay: 0s; }
 .lily-2 { animation-delay: 3.5s; }
 .lily-3 { animation-delay: 7s; }
@@ -33,10 +30,15 @@
   100% { transform: translateY(0) rotate(0deg) scale(1); }
 }
 
-/* 3. PAINÉIS DE VIDRO (Para o texto ser legível sobre as imagens) */
+/* 3. PAINÉIS DE VIDRO */
 .glass-panel {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
 }
+
+/* Scroll customizado para manter a elegância */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #fbcfe8; border-radius: 10px; }
