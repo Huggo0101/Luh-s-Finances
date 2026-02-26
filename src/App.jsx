@@ -157,7 +157,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-800 relative z-0 overflow-x-hidden">
       
-      {/* CAMADA 1: BACKGROUND */}
+      {/* BACKGROUND RESPONSIVO */}
       <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden bg-[#e8e2d7] pointer-events-none">
         <img src="/img/papledefundo.jpg" alt="Fundo" className="absolute top-0 left-0 w-full h-full object-cover opacity-60 mix-blend-multiply" />
         <img src="/img/marcerto.png" alt="Mar" className="absolute top-0 left-0 h-full w-auto max-w-[40vw] object-cover opacity-90" />
@@ -225,6 +225,7 @@ function App() {
           <div className="glass-panel p-5 md:p-6 rounded-[2rem] h-fit max-h-[500px] md:max-h-[650px] overflow-y-auto custom-scrollbar">
              <div className="flex justify-between items-center mb-6 border-b border-pink-200/50 pb-4">
                 <h3 className="text-2xl md:text-3xl text-pink-500 font-hesorder">Histórico</h3>
+                <span className="text-[10px] bg-pink-100 text-pink-600 px-3 py-1.5 rounded-full font-extrabold">{transacoesDoMes.length}</span>
              </div>
              <div className="space-y-3">
                {transacoesDoMes.map(item => (
@@ -244,7 +245,7 @@ function App() {
           </div>
         </div>
       ) : (
-        /* RESTAURAÇÃO DA ABA DE ANÁLISE */
+        /* ABA DE ANÁLISE RESTAURADA */
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in">
            <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col items-center min-h-[450px]">
             <h3 className="text-3xl text-pink-500 font-hesorder mb-12 text-center">Distribuição</h3>
@@ -254,32 +255,48 @@ function App() {
                   <Pie data={dataGrafico} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                     {dataGrafico.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip formatter={(v) => formatarMoeda(v)} />
+                  <Legend verticalAlign="bottom" />
                 </PieChart>
               </ResponsiveContainer>
-            ) : <p className="text-pink-400 text-xs font-bold uppercase mt-20">Sem dados para exibir</p>}
+            ) : <p className="text-pink-400 text-xs font-bold uppercase mt-20">Lance despesas para ver o gráfico</p>}
           </div>
 
-          <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col justify-between">
-            <h3 className="text-3xl text-pink-500 font-hesorder mb-8">Meta de Poupança</h3>
-            <div className="flex justify-between items-end mb-5">
-                 <p className="text-5xl font-extrabold text-pink-500">{porcentagemMeta}%</p>
-                 <input type="text" value={metaInput} onChange={(e) => setMetaInput(e.target.value)} onBlur={(e) => atualizarMetaNoBanco(e.target.value)} className="text-sm font-bold bg-white/50 px-3 py-1 rounded-lg w-28 text-right outline-none" />
+          <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col justify-between min-h-[450px]">
+            <div>
+                <h3 className="text-3xl text-pink-500 font-hesorder mb-8">Meta de Poupança</h3>
+                <div className="flex justify-between items-end mb-5">
+                    <p className="text-5xl font-extrabold text-pink-500 tracking-tighter">{porcentagemMeta}%</p>
+                    <div className="text-right">
+                        <p className="text-[10px] text-pink-600 font-black uppercase tracking-widest mb-1">Seu Objetivo:</p>
+                        <input type="text" value={metaInput} onChange={(e) => setMetaInput(e.target.value)} onBlur={(e) => atualizarMetaNoBanco(e.target.value)} className="text-sm font-bold bg-white/50 px-3 py-1.5 rounded-lg w-32 text-right outline-none border border-pink-100 focus:ring-2 focus:ring-pink-300" />
+                    </div>
+                </div>
+                <div className="w-full h-4 bg-white/50 rounded-full overflow-hidden shadow-inner">
+                    <div className="h-full bg-pink-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div>
+                </div>
             </div>
-            <div className="w-full h-4 bg-white/50 rounded-full overflow-hidden">
-                <div className="h-full bg-pink-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div>
+            
+            <div className="grid grid-cols-2 gap-4 mt-10">
+                <div className="bg-white/40 p-4 rounded-2xl border border-white/60">
+                    <p className="text-[9px] text-pink-600 font-black uppercase mb-1">Guardado (mês)</p>
+                    <p className="text-lg font-bold">{formatarMoeda(poupadoMes)}</p>
+                </div>
+                <div className="bg-white/40 p-4 rounded-2xl border border-white/60">
+                    <p className="text-[9px] text-amber-600 font-black uppercase mb-1">Resgatado (mês)</p>
+                    <p className="text-lg font-bold">{formatarMoeda(resgatadoMes)}</p>
+                </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* RESTAURAÇÃO DO BOTÃO DE SAIR */}
-      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-pink-600 hover:text-pink-800 uppercase tracking-widest py-4 px-8 bg-white/40 hover:bg-white/80 rounded-full shadow-sm transition-all">
+      {/* BOTÃO DE SAIR RESTAURADO */}
+      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[10px] font-black text-pink-600 hover:text-pink-800 uppercase tracking-[0.3em] py-4 px-10 bg-white/40 hover:bg-white/80 rounded-full shadow-sm transition-all border border-pink-100">
         Sair da Conta
       </button>
 
-      {/* CAMADA 2: LÍRIOS (Lírio amarelo corrigido para o canto inferior esquerdo) */}
+      {/* CAMADA 2: LÍRIOS POSICIONADOS */}
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
         <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32" style={{bottom: '15%', left: '5%'}} />
         <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute w-20 md:w-36" style={{top: '40%', right: '2%'}} />
