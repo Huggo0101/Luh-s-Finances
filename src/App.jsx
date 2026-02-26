@@ -157,7 +157,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-800 relative z-0 overflow-x-hidden">
       
-      {/* BACKGROUND RESPONSIVO */}
+      {/* BACKGROUND */}
       <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden bg-[#e8e2d7] pointer-events-none">
         <img src="/img/papledefundo.jpg" alt="Fundo" className="absolute top-0 left-0 w-full h-full object-cover opacity-60 mix-blend-multiply" />
         <img src="/img/marcerto.png" alt="Mar" className="absolute top-0 left-0 h-full w-auto max-w-[40vw] object-cover opacity-90" />
@@ -173,6 +173,19 @@ function App() {
         <div className="flex glass-panel p-1 rounded-full w-full md:w-auto">
           <button onClick={() => setAbaAtiva('lancamentos')} className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${abaAtiva === 'lancamentos' ? 'bg-pink-400 text-white shadow-md' : 'text-pink-400 hover:text-pink-600'}`}>Lançamentos</button>
           <button onClick={() => setAbaAtiva('analise')} className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${abaAtiva === 'analise' ? 'bg-pink-400 text-white shadow-md' : 'text-pink-400 hover:text-pink-600'}`}>Visão Geral</button>
+        </div>
+      </div>
+
+      {/* FILTRO MÊS DE REFERÊNCIA RESTAURADO */}
+      <div className="mb-8 glass-panel py-2 px-6 rounded-full flex items-center gap-4">
+        <span className="text-[10px] font-black text-pink-400 uppercase tracking-widest">Mês Referência:</span>
+        <div className="relative">
+            <input 
+                type="month" 
+                value={mesFiltro} 
+                onChange={(e) => setMesFiltro(e.target.value)} 
+                className="bg-transparent text-pink-600 font-bold text-sm outline-none cursor-pointer"
+            />
         </div>
       </div>
 
@@ -224,7 +237,7 @@ function App() {
 
           <div className="glass-panel p-5 md:p-6 rounded-[2rem] h-fit max-h-[500px] md:max-h-[650px] overflow-y-auto custom-scrollbar">
              <div className="flex justify-between items-center mb-6 border-b border-pink-200/50 pb-4">
-                <h3 className="text-2xl md:text-3xl text-pink-500 font-hesorder">Histórico</h3>
+                <h3 className="text-2xl md:text-3xl text-pink-500 font-hesorder">Histórico {formatarMesBR(mesFiltro)}</h3>
                 <span className="text-[10px] bg-pink-100 text-pink-600 px-3 py-1.5 rounded-full font-extrabold">{transacoesDoMes.length}</span>
              </div>
              <div className="space-y-3">
@@ -232,7 +245,7 @@ function App() {
                  <div key={item.id} className="flex justify-between items-center p-3 md:p-4 bg-white/60 rounded-2xl border border-white/50">
                     <div className="flex gap-2 items-center">
                        <button onClick={() => deletarTransacao(item.id)} className="p-1 text-pink-400 hover:text-rose-600"><IconTrash/></button>
-                       <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-400"><IconPencil/></button>
+                       <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-400 hover:text-amber-500"><IconPencil/></button>
                        <div className="flex flex-col ml-1">
                           <p className="text-[10px] md:text-xs font-extrabold text-gray-800">{item.descricao}</p>
                           <p className="text-[8px] md:text-[9px] text-pink-500 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
@@ -245,7 +258,7 @@ function App() {
           </div>
         </div>
       ) : (
-        /* ABA DE ANÁLISE RESTAURADA */
+        /* ABA DE ANÁLISE RESTAURADA COMPLETA */
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in">
            <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col items-center min-h-[450px]">
             <h3 className="text-3xl text-pink-500 font-hesorder mb-12 text-center">Distribuição</h3>
@@ -276,7 +289,6 @@ function App() {
                     <div className="h-full bg-pink-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div>
                 </div>
             </div>
-            
             <div className="grid grid-cols-2 gap-4 mt-10">
                 <div className="bg-white/40 p-4 rounded-2xl border border-white/60">
                     <p className="text-[9px] text-pink-600 font-black uppercase mb-1">Guardado (mês)</p>
@@ -291,12 +303,10 @@ function App() {
         </div>
       )}
 
-      {/* BOTÃO DE SAIR RESTAURADO */}
-      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[10px] font-black text-pink-600 hover:text-pink-800 uppercase tracking-[0.3em] py-4 px-10 bg-white/40 hover:bg-white/80 rounded-full shadow-sm transition-all border border-pink-100">
+      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-pink-600 hover:text-pink-800 uppercase tracking-widest py-4 px-8 bg-white/40 hover:bg-white/80 rounded-full shadow-sm transition-all border border-pink-100">
         Sair da Conta
       </button>
 
-      {/* CAMADA 2: LÍRIOS POSICIONADOS */}
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
         <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32" style={{bottom: '15%', left: '5%'}} />
         <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute w-20 md:w-36" style={{top: '40%', right: '2%'}} />
