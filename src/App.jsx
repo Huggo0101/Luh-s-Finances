@@ -157,16 +157,13 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-800 relative z-0 overflow-x-hidden">
       
-      {/* CAMADA 1: BACKGROUND (Atrás dos painéis) */}
+      {/* CAMADA 1: BACKGROUND */}
       <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden bg-[#e8e2d7] pointer-events-none">
         <img src="/img/papledefundo.jpg" alt="Fundo" className="absolute top-0 left-0 w-full h-full object-cover opacity-60 mix-blend-multiply" />
         <img src="/img/marcerto.png" alt="Mar" className="absolute top-0 left-0 h-full w-auto max-w-[40vw] object-cover opacity-90" />
-        
-        {/* Elementos reposicionados para mobile (mais afastados e menores) */}
         <img src="/img/soldouradao.png" alt="Sol" className="absolute top-[1%] left-[1%] w-20 md:w-48 drop-shadow-xl" />
         <img src="/img/meialuadourada.png" alt="Lua" className="absolute top-[1%] right-[1%] w-16 md:w-36 drop-shadow-xl" />
         <img src="/img/tonycantri.png" alt="Yin Yang" className="absolute top-[12%] left-[10%] md:top-[18%] md:left-[12%] w-14 md:w-28 drop-shadow-lg" />
-        
         <img src="/img/conchaseestrela.png" alt="Conchas" className="absolute w-24 md:w-56 drop-shadow-xl" style={{ bottom: '-5px', right: '-5px' }} />
       </div>
 
@@ -199,42 +196,26 @@ function App() {
             <h2 className="text-3xl md:text-4xl text-pink-500 mb-8 text-center font-hesorder drop-shadow-sm">{editandoId ? 'Editando' : 'Novo Lançamento'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex gap-2.5">
-                <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-3 md:p-4 rounded-2xl bg-white/60 border border-pink-200 text-[10px] md:text-xs font-bold text-pink-600 focus:ring-2 focus:ring-pink-300 outline-none" />
-                <input required type="text" placeholder={placeholders[tipo]} value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-2/3 p-3 md:p-4 rounded-2xl bg-white/60 border border-pink-200 font-medium text-xs md:text-sm text-gray-800 focus:ring-2 focus:ring-pink-300 outline-none" />
+                <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-3 md:p-4 rounded-2xl bg-white/60 border border-pink-200 text-[10px] md:text-xs font-bold text-pink-600 outline-none" />
+                <input required type="text" placeholder={placeholders[tipo]} value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-2/3 p-3 md:p-4 rounded-2xl bg-white/60 border border-pink-200 font-medium text-xs md:text-sm text-gray-800 outline-none" />
               </div>
               <input required type="text" placeholder="R$ 0,00" value={valor} onChange={(e) => {
                 let v = e.target.value.replace(/\D/g, ""); setValor((Number(v)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}))
-              }} className="w-full p-4 md:p-5 rounded-2xl bg-white/60 border border-pink-200 font-extrabold text-2xl md:text-3xl text-center text-pink-600 focus:ring-2 focus:ring-pink-300 outline-none" />
+              }} className="w-full p-4 md:p-5 rounded-2xl bg-white/60 border border-pink-200 font-extrabold text-2xl md:text-3xl text-center text-pink-600 outline-none" />
               
               <div className="grid grid-cols-2 gap-2 pt-2">
-                {[
-                  { id: 'receita', color: 'emerald', text: 'Receita' },
-                  { id: 'despesa', color: 'rose', text: 'Despesa' },
-                  { id: 'poupanca', color: 'orange', text: 'Guardar' },
-                  { id: 'resgate', color: 'amber', text: 'Resgatar' }
-                ].map(b => (
-                  <button key={b.id} type="button" onClick={() => setTipo(b.id)} className={`py-3 md:py-4 rounded-xl font-extrabold text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${tipo === b.id ? `bg-${b.color}-400 text-white shadow-lg` : `bg-white/50 text-${b.color}-600 border border-${b.color}-200 hover:bg-white`}`}>
-                    {b.text}
-                  </button>
+                {['receita', 'despesa', 'poupanca', 'resgate'].map(id => (
+                  <button key={id} type="button" onClick={() => setTipo(id)} className={`py-3 md:py-4 rounded-xl font-extrabold text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${tipo === id ? `bg-pink-400 text-white shadow-lg` : `bg-white/50 text-pink-600 border border-pink-200 hover:bg-white`}`}>{id}</button>
                 ))}
               </div>
 
-              {tipo === 'despesa' && (
-                <>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3 rounded-xl font-bold text-[9px] md:text-[10px] border transition-all ${metodoPagamento === 'debito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>DÉBITO / PIX</button>
-                    <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3 rounded-xl font-bold text-[9px] md:text-[10px] border transition-all ${metodoPagamento === 'credito' ? 'bg-pink-400 text-white shadow-md' : 'bg-white/50 text-pink-600 border-pink-200 hover:bg-white'}`}>CRÉDITO</button>
-                  </div>
-                </>
-              )}
-
               <div className={`mt-4 ${editandoId ? 'flex gap-2' : ''}`}>
-                <button type="submit" disabled={carregando} className={`w-full bg-pink-500 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest hover:bg-pink-600 transition-all text-xs ${editandoId ? 'flex-1' : ''}`}>
+                <button type="submit" disabled={carregando} className="w-full bg-pink-500 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest text-xs flex-1">
                   {carregando ? '...' : editandoId ? 'Salvar' : 'Confirmar'}
                 </button>
                 {editandoId && (
-                  <button type="button" onClick={cancelarEdicao} className="flex-1 bg-gray-400 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest hover:bg-gray-500 transition-all text-xs">
-                    Sair
+                  <button type="button" onClick={cancelarEdicao} className="flex-1 bg-gray-400 text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest text-xs">
+                    Cancelar
                   </button>
                 )}
               </div>
@@ -244,39 +225,65 @@ function App() {
           <div className="glass-panel p-5 md:p-6 rounded-[2rem] h-fit max-h-[500px] md:max-h-[650px] overflow-y-auto custom-scrollbar">
              <div className="flex justify-between items-center mb-6 border-b border-pink-200/50 pb-4">
                 <h3 className="text-2xl md:text-3xl text-pink-500 font-hesorder">Histórico</h3>
-                <span className="text-[10px] bg-pink-100 text-pink-600 px-3 py-1.5 rounded-full font-extrabold">{transacoesDoMes.length}</span>
              </div>
              <div className="space-y-3">
                {transacoesDoMes.map(item => (
                  <div key={item.id} className="flex justify-between items-center p-3 md:p-4 bg-white/60 rounded-2xl border border-white/50">
                     <div className="flex gap-2 items-center">
+                       <button onClick={() => deletarTransacao(item.id)} className="p-1 text-pink-400 hover:text-rose-600"><IconTrash/></button>
                        <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-400"><IconPencil/></button>
                        <div className="flex flex-col ml-1">
-                          <p className="text-[10px] md:text-xs font-extrabold text-gray-800 truncate max-w-[100px] md:max-w-[150px]">{item.descricao}</p>
+                          <p className="text-[10px] md:text-xs font-extrabold text-gray-800">{item.descricao}</p>
                           <p className="text-[8px] md:text-[9px] text-pink-500 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
                        </div>
                     </div>
-                    <p className={`text-[10px] md:text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {item.tipo === 'receita' ? '+' : '-'} {formatarMoeda(item.valor)}
-                    </p>
+                    <p className={`text-[10px] md:text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}`}>{formatarMoeda(item.valor)}</p>
                  </div>
                ))}
              </div>
           </div>
         </div>
       ) : (
-        /* Aba de Análise preservada */
+        /* RESTAURAÇÃO DA ABA DE ANÁLISE */
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in">
-           {/* ... conteúdo da análise ... */}
+           <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col items-center min-h-[450px]">
+            <h3 className="text-3xl text-pink-500 font-hesorder mb-12 text-center">Distribuição</h3>
+            {dataGrafico.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={dataGrafico} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    {dataGrafico.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <p className="text-pink-400 text-xs font-bold uppercase mt-20">Sem dados para exibir</p>}
+          </div>
+
+          <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col justify-between">
+            <h3 className="text-3xl text-pink-500 font-hesorder mb-8">Meta de Poupança</h3>
+            <div className="flex justify-between items-end mb-5">
+                 <p className="text-5xl font-extrabold text-pink-500">{porcentagemMeta}%</p>
+                 <input type="text" value={metaInput} onChange={(e) => setMetaInput(e.target.value)} onBlur={(e) => atualizarMetaNoBanco(e.target.value)} className="text-sm font-bold bg-white/50 px-3 py-1 rounded-lg w-28 text-right outline-none" />
+            </div>
+            <div className="w-full h-4 bg-white/50 rounded-full overflow-hidden">
+                <div className="h-full bg-pink-400 transition-all duration-1000" style={{ width: `${porcentagemMeta}%` }}></div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* CAMADA 2: FRENTE (Lírios Mobile-Friendly) */}
+      {/* RESTAURAÇÃO DO BOTÃO DE SAIR */}
+      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-pink-600 hover:text-pink-800 uppercase tracking-widest py-4 px-8 bg-white/40 hover:bg-white/80 rounded-full shadow-sm transition-all">
+        Sair da Conta
+      </button>
+
+      {/* CAMADA 2: LÍRIOS (Lírio amarelo corrigido para o canto inferior esquerdo) */}
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
-        {/* Lírios reduzidos no mobile para não cobrirem o centro da tela */}
-        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily lily-1 absolute w-16 md:w-32" style={{top: '10%', left: '2%'}} />
-        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily lily-3 absolute w-20 md:w-36" style={{top: '35%', right: '2%'}} />
-        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily lily-2 absolute w-24 md:w-40" style={{bottom: '8%', right: '8%'}} />
+        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32" style={{bottom: '15%', left: '5%'}} />
+        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute w-20 md:w-36" style={{top: '40%', right: '2%'}} />
+        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute w-24 md:w-40" style={{bottom: '8%', right: '8%'}} />
       </div>
 
     </div>
