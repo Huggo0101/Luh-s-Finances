@@ -1,21 +1,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabaseClient'
 import { Login } from './Login'
-// Importação para o Gráfico Recharts
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 
-// Ícones Minimalistas Lily e Bows
 const IconLily = () => <span className="text-xl">⚜️</span>;
 const IconBow = () => <span className="text-xl">🎀</span>;
 const IconTrash = () => <span className="text-xs">🗑️</span>;
 const IconPencil = () => <span className="text-xs">✏️</span>;
-const IconX = () => <span className="text-xs">❌</span>;
-const IconCheck = () => <span className="text-xs">✅</span>;
 
 function App() {
   const [session, setSession] = useState(null)
   const [transacoes, setTransacoes] = useState([])
-  // Estado para controlar a aba ativa: 'lancamentos' ou 'analise'
   const [abaAtiva, setAbaAtiva] = useState('lancamentos') 
   
   const [dataLancamento, setDataLancamento] = useState(new Date().toISOString().substring(0, 10))
@@ -27,7 +22,6 @@ function App() {
   const [carregando, setCarregando] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
 
-  // --- NOVA LOGICA DE META PERSISTENTE ---
   const [metaPoupanca, setMetaPoupanca] = useState(2000) 
   const [metaInput, setMetaInput] = useState('R$ 2.000,00')
 
@@ -48,36 +42,30 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Buscar Transações e Meta do Perfil
   const carregarDadosIniciais = async () => {
     if (!session) return
     
-    // 1. Busca Transações
     const { data: tData } = await supabase.from('transacoes').select('*').order('data_transacao', { ascending: false })
     if (tData) setTransacoes(tData)
 
-    // 2. Busca Meta no Perfil
     const { data: pData, error } = await supabase.from('perfis').select('meta_poupanca').eq('id', session.user.id).single()
     
     if (pData) {
       setMetaPoupanca(pData.meta_poupanca)
       setMetaInput(Number(pData.meta_poupanca).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
     } else if (error && error.code === 'PGRST116') {
-      // Se não existir perfil, cria um agora
       await supabase.from('perfis').insert([{ id: session.user.id, meta_poupanca: 2000 }])
     }
   }
 
   useEffect(() => { if (session) carregarDadosIniciais() }, [session])
 
-  // --- FUNÇÃO PARA SALVAR META (Persistência) ---
   const atualizarMetaNoBanco = async (novoValor) => {
     const valorNumerico = parseFloat(novoValor.replace("R$", "").replace(/\./g, "").replace(",", ".").trim())
     setMetaPoupanca(valorNumerico)
     await supabase.from('perfis').update({ meta_poupanca: valorNumerico }).eq('id', session.user.id)
   }
 
-  // Sincroniza data com filtro
   useEffect(() => {
     const [ano, mes] = mesFiltro.split('-');
     const hoje = new Date();
@@ -88,7 +76,6 @@ function App() {
     }
   }, [mesFiltro]);
 
-  // --- CÁLCULOS ---
   const transacoesDoMes = transacoes.filter(t => t.data_transacao.substring(0, 7) === mesFiltro);
   const transacoesAteMes = transacoes.filter(t => t.data_transacao.substring(0, 7) <= mesFiltro);
 
@@ -107,17 +94,15 @@ function App() {
   const totalPoupanca = poupadoAcumulado - resgatadoAcumulado;
   const saldoConta = receitasAcumuladas - despesasAcumuladas - poupadoAcumulado + resgatadoAcumulado;
 
-  // --- DADOS DO GRÁFICO (Paleta Lily) ---
   const dataGrafico = [
-    { name: 'Débito/Pix', value: despesasDebito, color: '#A5D6A7' }, // Verde pálido (folhas)
-    { name: 'Crédito', value: despesasCredito, color: '#FFAB91' }, // Rosa/Laranja pálido (pétalas)
-    { name: 'Guardado', value: poupadoMes, color: '#FFE082' } // Amarelo pálido (miolo)
+    { name: 'Débito/Pix', value: despesasDebito, color: '#A5D6A7' }, 
+    { name: 'Crédito', value: despesasCredito, color: '#FFAB91' }, 
+    { name: 'Guardado', value: poupadoMes, color: '#FFE082' } 
   ].filter(d => d.value > 0);
 
-  const metaCalculo = parseFloat(metaExibicao.replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) || 0;
-  const porcentagemMeta = metaCalculo > 0 ? Math.min((totalPoupanca / metaCalculo) * 100, 100).toFixed(1) : 0;
+  // BUG CORRIGIDO AQUI: Remoção do metaExibicao fantasma e uso direto do metaPoupanca
+  const porcentagemMeta = metaPoupanca > 0 ? Math.min((totalPoupanca / metaPoupanca) * 100, 100).toFixed(1) : 0;
 
-  // --- FUNÇÕES DE EDIÇÃO E EXCLUSÃO ---
   const prepararEdicao = (item) => {
     setEditandoId(item.id);
     setDescricao(item.descricao);
@@ -177,22 +162,20 @@ function App() {
   return (
     <div className="min-h-screen bg-[#FFFBF2] flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-700 selection:bg-pink-100 relative">
       
-      {/* 1. CAMADA DE LÍRIOS FLUTUANTES (Colagem Background) */}
+      {/* CAMADA DE LÍRIOS FLUTUANTES */}
       <div className="lily-background-collage">
-        {/* Usando emojis ⚜️ e 🎀 como elementos flutuantes (Lógica SI) */}
         {[...Array(20)].map((_, i) => (
           <span key={i} className="floating-lily" style={{
             left: `${Math.random() * 100}%`,
             animationDelay: `${Math.random() * 15}s`,
             animationDuration: `${10 + Math.random() * 20}s`,
             fontSize: `${1 + Math.random() * 3}rem`,
-            color: i % 2 === 0 ? '#FFE082' : '#FFAB91', // Amarelo ou Rosa pálido
+            color: i % 2 === 0 ? '#FFE082' : '#FFAB91',
             opacity: 0.05 + Math.random() * 0.1
           }}>{i % 3 === 0 ? '⚜️' : '🎀'}</span>
         ))}
       </div>
 
-      {/* HEADER E NAVEGAÇÃO minimalista com fonte sofisticada */}
       <div className="max-w-6xl w-full flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-pink-100 pb-5">
         <h1 className="text-4xl md:text-5xl font-extrabold text-pink-400 tracking-tighter uppercase style-feminine-expressive style-feminine-main">Financeiro da Luh</h1>
         
@@ -202,7 +185,6 @@ function App() {
         </div>
       </div>
 
-      {/* CARDS DE RESUMO (Minimalistas Lily) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl w-full mb-8">
         {[
           { label: 'Saldo em Conta 💖', value: saldoConta, color: 'pink' },
@@ -219,9 +201,8 @@ function App() {
 
       {abaAtiva === 'lancamentos' ? (
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* Formulário Profissional Minimalista */}
           <div className={`bg-white p-8 rounded-[2rem] border-2 shadow-sm h-fit transition-all duration-300 ${editandoId ? 'border-amber-300 shadow-amber-100' : 'border-pink-100'}`}>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-pink-400 mb-8 text-center italic uppercase tracking-tighter style-feminine-expressive style-feminine-title">Financeiro da Luh <IconBow/></h2>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-pink-400 mb-8 text-center italic uppercase tracking-tighter style-feminine-expressive style-feminine-title">{editandoId ? 'Editando ✏️' : 'Financeiro da Luh'} <IconBow/></h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex gap-2.5">
                 <input type="date" required value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} className="w-1/3 p-4 rounded-2xl border border-pink-100 bg-pink-50/20 text-xs font-bold text-pink-500 focus:border-pink-400 focus:ring-1 focus:ring-pink-300 cursor-pointer" />
@@ -250,7 +231,7 @@ function App() {
                     <button type="button" onClick={() => setMetodoPagamento('debito')} className={`py-3.5 rounded-xl font-bold text-[10px] border transition-all ${metodoPagamento === 'debito' ? 'bg-pink-300 text-white shadow-sm' : 'bg-white text-pink-300 border-pink-100 hover:bg-pink-50'}`}>DÉBITO / PIX</button>
                     <button type="button" onClick={() => setMetodoPagamento('credito')} className={`py-3.5 rounded-xl font-bold text-[10px] border transition-all ${metodoPagamento === 'credito' ? 'bg-pink-300 text-white shadow-sm' : 'bg-white text-pink-300 border-pink-100 hover:bg-pink-50'}`}>CARTÃO CRÉDITO</button>
                   </div>
-                  {!editandoId && metodoPagamento === 'credito' && parcelas && (
+                  {!editandoId && metodoPagamento === 'credito' && (
                     <div className="flex items-center justify-between bg-pink-50/30 p-4 rounded-xl border border-pink-100 mt-2 transition-all">
                       <span className="text-[10px] font-extrabold text-pink-600 uppercase">Parcelar em:</span>
                       <div className="flex items-center gap-2.5">
@@ -268,7 +249,6 @@ function App() {
             </form>
           </div>
 
-          {/* Histórico Minimalista BR */}
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-pink-100 h-fit max-h-[650px] overflow-y-auto style-feminine-history custom-scrollbar relative">
              <div className="flex justify-between items-center mb-7 border-b border-pink-50 pb-5 relative">
                 <h3 className="font-extrabold text-pink-400 uppercase text-xs tracking-wider style-feminine-expressive style-feminine-history-title">Histórico 🎀 {formatarMesBR(mesFiltro)}</h3>
@@ -317,7 +297,6 @@ function App() {
           </div>
         </div>
       ) : (
-        /* ABA DE VISÃO GERAL (Gráfico Lírio Decorado) */
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
           <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-pink-100 flex flex-col items-center min-h-[450px]">
             <h3 className="font-extrabold text-pink-400 uppercase text-xs tracking-[0.4em] mb-12 text-center style-feminine-expressive style-feminine-analise-title">Distribuição de Gastos 💕</h3>
@@ -328,7 +307,6 @@ function App() {
                     {dataGrafico.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={3} />
                     ))}
-                    {/* Elementos centrais para formar a flor */}
                     <circle cx="50%" cy="50%" r="65" fill="#FFE082" fillOpacity={0.4} stroke="#FFE082" strokeWidth={1} strokeDasharray="3 3" />
                     <circle cx="50%" cy="50%" r="55" fill="#fff" />
                     <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-3xl font-extrabold text-gray-700">⚜️</text>
@@ -349,7 +327,7 @@ function App() {
             <div>
               <h3 className="font-extrabold text-pink-400 uppercase text-xs mb-8 tracking-[0.2em] style-feminine-expressive style-feminine-meta-title">Meta de Poupança Permanente 🐷💖</h3>
               <div className="flex justify-between items-end mb-5 border-b border-pink-50 pb-5">
-                 <p className="text-5xl font-extrabold text-pink-400 tracking-tighter transition-all duration-1000 relative" style={{ width: `${porcentagemMeta}%` }}>{porcentagemMeta}%</p>
+                 <p className="text-5xl font-extrabold text-pink-400 tracking-tighter relative">{porcentagemMeta}%</p>
                  <div className="text-right">
                     <p className="text-[9px] text-pink-300 font-black uppercase">Objetivo da Luh:</p>
                     <input type="text" value={metaInput} 
@@ -366,7 +344,7 @@ function App() {
             </div>
             
             <div className="mt-10 grid grid-cols-2 gap-4 relative">
-               <div className="bg-purple-50 p-5 rounded-3xl border border-purple-100 shadow-sm relative relative">
+               <div className="bg-purple-50 p-5 rounded-3xl border border-purple-100 shadow-sm relative">
                   <p className="text-[8px] text-purple-600 font-black uppercase tracking-widest mb-1 relative">Guardado 🐷</p>
                   <p className="text-sm font-black text-purple-700 relative">{formatarMoeda(poupadoMes)}</p>
                </div>
@@ -379,8 +357,7 @@ function App() {
         </div>
       )}
 
-      {/* FOOTER */}
-      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-pink-100 hover:text-pink-400uppercase tracking-[0.5em] transition-all py-4 px-8 border border-transparent hover:border-pink-100 rounded-full">Sair da Conta ⚜️</button>
+      <button onClick={() => supabase.auth.signOut()} className="mt-12 text-[9px] font-black text-pink-300 hover:text-pink-500 uppercase tracking-[0.5em] transition-all py-4 px-8 border border-transparent hover:border-pink-200 rounded-full">Sair da Conta ⚜️</button>
     </div>
   )
 }
