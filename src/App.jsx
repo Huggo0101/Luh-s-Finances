@@ -58,6 +58,7 @@ function App() {
 
   const atualizarMetaNoBanco = async (novoValor) => {
     const valorNumerico = parseFloat(novoValor.replace("R$", "").replace(/\./g, "").replace(",", ".").trim())
+    if (isNaN(valorNumerico)) return;
     setMetaPoupanca(valorNumerico)
     await supabase.from('perfis').update({ meta_poupanca: valorNumerico }).eq('id', session.user.id)
   }
@@ -157,7 +158,6 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col items-center p-3 md:p-10 font-sans pb-20 text-gray-800 relative z-0 overflow-x-hidden">
       
-      {/* BACKGROUND */}
       <div className="fixed top-0 left-0 w-full h-full -z-20 overflow-hidden bg-[#e8e2d7] pointer-events-none">
         <img src="/img/papledefundo.jpg" alt="Fundo" className="absolute top-0 left-0 w-full h-full object-cover opacity-60 mix-blend-multiply" />
         <img src="/img/marcerto.png" alt="Mar" className="absolute top-0 left-0 h-full w-auto max-w-[40vw] object-cover opacity-90" />
@@ -176,17 +176,9 @@ function App() {
         </div>
       </div>
 
-      {/* FILTRO MÊS DE REFERÊNCIA RESTAURADO */}
       <div className="mb-8 glass-panel py-2 px-6 rounded-full flex items-center gap-4">
         <span className="text-[10px] font-black text-pink-400 uppercase tracking-widest">Mês Referência:</span>
-        <div className="relative">
-            <input 
-                type="month" 
-                value={mesFiltro} 
-                onChange={(e) => setMesFiltro(e.target.value)} 
-                className="bg-transparent text-pink-600 font-bold text-sm outline-none cursor-pointer"
-            />
-        </div>
+        <input type="month" value={mesFiltro} onChange={(e) => setMesFiltro(e.target.value)} className="bg-transparent text-pink-600 font-bold text-sm outline-none cursor-pointer" />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl w-full mb-8">
@@ -258,7 +250,6 @@ function App() {
           </div>
         </div>
       ) : (
-        /* ABA DE ANÁLISE RESTAURADA COMPLETA */
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in">
            <div className="glass-panel p-8 md:p-10 rounded-[2rem] flex flex-col items-center min-h-[450px]">
             <h3 className="text-3xl text-pink-500 font-hesorder mb-12 text-center">Distribuição</h3>
@@ -282,7 +273,10 @@ function App() {
                     <p className="text-5xl font-extrabold text-pink-500 tracking-tighter">{porcentagemMeta}%</p>
                     <div className="text-right">
                         <p className="text-[10px] text-pink-600 font-black uppercase tracking-widest mb-1">Seu Objetivo:</p>
-                        <input type="text" value={metaInput} onChange={(e) => setMetaInput(e.target.value)} onBlur={(e) => atualizarMetaNoBanco(e.target.value)} className="text-sm font-bold bg-white/50 px-3 py-1.5 rounded-lg w-32 text-right outline-none border border-pink-100 focus:ring-2 focus:ring-pink-300" />
+                        <input type="text" value={metaInput} onChange={(e) => {
+                          let v = e.target.value.replace(/\D/g, "");
+                          setMetaInput(v === "" ? "" : (Number(v)/100).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}));
+                        }} onBlur={(e) => atualizarMetaNoBanco(e.target.value)} className="text-sm font-bold bg-white/50 px-3 py-1.5 rounded-lg w-32 text-right outline-none border border-pink-100 focus:ring-2 focus:ring-pink-300" />
                     </div>
                 </div>
                 <div className="w-full h-4 bg-white/50 rounded-full overflow-hidden shadow-inner">
@@ -312,7 +306,6 @@ function App() {
         <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute w-20 md:w-36" style={{top: '40%', right: '2%'}} />
         <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute w-24 md:w-40" style={{bottom: '8%', right: '8%'}} />
       </div>
-
     </div>
   )
 }
