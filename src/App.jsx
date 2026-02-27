@@ -279,7 +279,6 @@ function App() {
                           <div className="flex flex-wrap items-center gap-1.5">
                             <p className="text-[10px] md:text-xs font-extrabold text-gray-800">{item.descricao}</p>
                             
-                            {/* AJUSTES AQUI: Rótulos para Débito, Crédito e Poupança */}
                             {item.tipo === 'despesa' && item.metodo_pagamento === 'credito' && (
                               <span className="text-[7px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded font-black uppercase">
                                 {item.parcela_atual}/{item.total_parcelas} CRÉDITO
@@ -364,9 +363,9 @@ function App() {
       </button>
 
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
-        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32 top-[2%] right-[5%] md:top-auto md:right-auto md:bottom-[15%] md:left-[5%]" />
-        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute hidden md:block w-20 md:w-36" style={{top: '40%', right: '2%'}} />
-        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute hidden md:block w-24 md:w-40" style={{bottom: '8%', right: '8%'}} />
+        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-20 lg:w-24 top-[2%] right-[5%] md:top-auto md:right-auto md:bottom-[5%] md:left-[2%]" />
+        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute hidden md:block md:w-24 lg:w-28" style={{top: '40%', right: '1%'}} />
+        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute hidden md:block md:w-28 lg:w-32" style={{bottom: '2%', right: '2%'}} />
       </div>
     </div>
   )
