@@ -276,23 +276,36 @@ function App() {
                        <button onClick={() => deletarTransacao(item.id)} className="p-1 text-pink-400 hover:text-rose-600"><IconTrash/></button>
                        <button onClick={() => prepararEdicao(item)} className="p-1 text-pink-400 hover:text-amber-500"><IconPencil/></button>
                        <div className="flex flex-col ml-1">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <p className="text-[10px] md:text-xs font-extrabold text-gray-800">{item.descricao}</p>
                             
-                            {/* AJUSTE AQUI: Mostrar "CRÉDITO" nas parcelas de despesa no crédito */}
+                            {/* AJUSTES AQUI: Rótulos para Débito, Crédito e Poupança */}
                             {item.tipo === 'despesa' && item.metodo_pagamento === 'credito' && (
-                              <span className="text-[7px] bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded font-black uppercase">
+                              <span className="text-[7px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded font-black uppercase">
                                 {item.parcela_atual}/{item.total_parcelas} CRÉDITO
                               </span>
                             )}
+                            {item.tipo === 'despesa' && item.metodo_pagamento === 'debito' && (
+                              <span className="text-[7px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-black uppercase">
+                                DÉBITO / PIX
+                              </span>
+                            )}
+                            {item.tipo === 'poupanca' && (
+                              <span className="text-[7px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-black uppercase">
+                                🐷 POUPANÇA
+                              </span>
+                            )}
+                            {item.tipo === 'resgate' && (
+                              <span className="text-[7px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-black uppercase">
+                                🔓 RESGATE
+                              </span>
+                            )}
+
                           </div>
                           <p className="text-[8px] md:text-[9px] text-pink-500 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
                        </div>
                     </div>
-                    {/* AJUSTE AQUI: Adicionar emojis na listagem para resgate e poupança */}
-                    <p className={`text-[10px] md:text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : item.tipo === 'resgate' ? 'text-amber-600' : item.tipo === 'poupanca' ? 'text-purple-600' : 'text-rose-600'}`}>
-                      {item.tipo === 'receita' ? '+' : item.tipo === 'resgate' ? '🔓 ' : item.tipo === 'poupanca' ? '🐷 ' : '-'} {formatarMoeda(item.valor)}
-                    </p>
+                    <p className={`text-[10px] md:text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}`}>{formatarMoeda(item.valor)}</p>
                  </div>
                ))}
              </div>
