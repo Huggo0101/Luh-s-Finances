@@ -52,8 +52,10 @@ export function Login() {
       </div>
 
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
-        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32" style={{bottom: '15%', left: '5%'}} />
-        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute w-24 md:w-40" style={{bottom: '5%', right: '5%'}} />
+        {/* 1º Lírio: No mobile fica no topo direito, no PC volta pra posição original dele */}
+        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32 top-[2%] right-[5%] md:top-auto md:right-auto md:bottom-[15%] md:left-[5%]" />
+        {/* 2º Lírio: Oculto no mobile, visível no PC */}
+        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute hidden md:block w-24 md:w-40" style={{bottom: '5%', right: '5%'}} />
       </div>
     </div>
   )

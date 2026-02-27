@@ -236,7 +236,6 @@ function App() {
                 ))}
               </div>
 
-              {/* RESTAURAÇÃO DAS FUNÇÕES DE DÉBITO E CRÉDITO */}
               {tipo === 'despesa' && (
                 <div className="space-y-4 mt-2">
                   <div className="grid grid-cols-2 gap-2">
@@ -344,10 +343,11 @@ function App() {
         Sair da Conta
       </button>
 
+      {/* ALTERAÇÃO DOS LÍRIOS: No mobile fica apenas 1 no topo, no PC continuam os 3 no mesmo lugar */}
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
-        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32" style={{bottom: '15%', left: '5%'}} />
-        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute w-20 md:w-36" style={{top: '40%', right: '2%'}} />
-        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute w-24 md:w-40" style={{bottom: '8%', right: '8%'}} />
+        <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32 top-[2%] right-[5%] md:top-auto md:right-auto md:bottom-[15%] md:left-[5%]" />
+        <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute hidden md:block w-20 md:w-36" style={{top: '40%', right: '2%'}} />
+        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute hidden md:block w-24 md:w-40" style={{bottom: '8%', right: '8%'}} />
       </div>
     </div>
   )
