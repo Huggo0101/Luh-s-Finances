@@ -365,7 +365,6 @@ function App() {
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
         <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-20 lg:w-24 top-[2%] right-[5%] md:top-auto md:right-auto md:bottom-[5%] md:left-[2%]" />
         <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute hidden md:block md:w-24 lg:w-28" style={{top: '40%', right: '1%'}} />
-        <img src="/img/lirioamarelolindo.png" alt="Lírio" className="floating-lily absolute hidden md:block md:w-28 lg:w-32" style={{bottom: '2%', right: '2%'}} />
       </div>
     </div>
   )
