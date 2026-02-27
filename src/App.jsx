@@ -278,14 +278,21 @@ function App() {
                        <div className="flex flex-col ml-1">
                           <div className="flex items-center gap-1.5">
                             <p className="text-[10px] md:text-xs font-extrabold text-gray-800">{item.descricao}</p>
+                            
+                            {/* AJUSTE AQUI: Mostrar "CRÉDITO" nas parcelas de despesa no crédito */}
                             {item.tipo === 'despesa' && item.metodo_pagamento === 'credito' && (
-                              <span className="text-[7px] bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded font-black uppercase">{item.parcela_atual}/{item.total_parcelas} C</span>
+                              <span className="text-[7px] bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded font-black uppercase">
+                                {item.parcela_atual}/{item.total_parcelas} CRÉDITO
+                              </span>
                             )}
                           </div>
                           <p className="text-[8px] md:text-[9px] text-pink-500 font-bold uppercase">{formatarDataBR(item.data_transacao)}</p>
                        </div>
                     </div>
-                    <p className={`text-[10px] md:text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}`}>{formatarMoeda(item.valor)}</p>
+                    {/* AJUSTE AQUI: Adicionar emojis na listagem para resgate e poupança */}
+                    <p className={`text-[10px] md:text-xs font-black ${item.tipo === 'receita' ? 'text-emerald-600' : item.tipo === 'resgate' ? 'text-amber-600' : item.tipo === 'poupanca' ? 'text-purple-600' : 'text-rose-600'}`}>
+                      {item.tipo === 'receita' ? '+' : item.tipo === 'resgate' ? '🔓 ' : item.tipo === 'poupanca' ? '🐷 ' : '-'} {formatarMoeda(item.valor)}
+                    </p>
                  </div>
                ))}
              </div>
@@ -343,7 +350,6 @@ function App() {
         Sair da Conta
       </button>
 
-      {/* ALTERAÇÃO DOS LÍRIOS: No mobile fica apenas 1 no topo, no PC continuam os 3 no mesmo lugar */}
       <div className="fixed top-0 left-0 w-full h-full z-50 pointer-events-none overflow-hidden">
         <img src="/img/lirioamarelo.png" alt="Lírio" className="floating-lily absolute w-16 md:w-32 top-[2%] right-[5%] md:top-auto md:right-auto md:bottom-[15%] md:left-[5%]" />
         <img src="/img/liriolindao.png" alt="Lírio" className="floating-lily absolute hidden md:block w-20 md:w-36" style={{top: '40%', right: '2%'}} />
